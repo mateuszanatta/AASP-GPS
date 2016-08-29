@@ -6,6 +6,8 @@ clear;
 warning('off','all')
 warning
 
+addpath CorrelatorBanks
+
 %% code parameters
 
 % code length (GPS: 1023) - GNSS Applications use code lenghts of 1023 bits
@@ -77,37 +79,47 @@ pulse = gen_pulse_rect_bp(B,rho_pulse,Lc,Ti,Nc);
 tau = (0.0:Ts:To-Ts)';
 
 % Set of Signals with different pulse delays within the same Pseudo Random sequence used for a satellite transmission
-signal_shiftedPR = zeros(2046, length(shifted_delays_PR), satAmount);
-for ii = 1:satAmount;
-    for kk = 1:length(shifted_delays_PR);
-        % generate correlators bank signals of Pseudo Random Sequences
-        signal_shiftedPR(:,kk,ii) = gen_signal(tau + shifted_delays_PR(kk), id(:,ii), pulse, Lc, Ti, Nc);
-    end
-end
+% signal_shiftedPR = zeros(2046, length(shifted_delays_PR), satAmount);
 
-signal_shiftedPR2 = zeros(22506, length(shifted_delays_PR), satAmount);
-for ii = 1:satAmount;
-    for kk = 1:length(shifted_delays_PR);
-        % generate correlators bank signals of Pseudo Random Sequences
-        signal_shiftedPR2(:,kk,ii) = gen_signal2(tau + shifted_delays_PR(kk), id(:,ii), pulse, Lc, Ti, Nc);
-    end
-end
+signal_shiftedPR = correlator_banks(tau, shifted_delays_PR, id, pulse, Lc, ...
+                                    Ti, Nc, satAmount, 'signal_shiftedPR', 0);
+% for ii = 1:satAmount;
+%     for kk = 1:length(shifted_delays_PR);
+%         % generate correlators bank signals of Pseudo Random Sequences
+%         signal_shiftedPR(:,kk,ii) = gen_signal(tau + shifted_delays_PR(kk), id(:,ii), pulse, Lc, Ti, Nc);
+%     end
+% end
+
+% signal_shiftedPR2 = zeros(22506, length(shifted_delays_PR), satAmount);
+signal_shiftedPR2 = correlator_banks(tau, shifted_delays_PR, id, pulse, Lc, ...
+                                    Ti, Nc, satAmount, 'signal_shiftedPR2', 1);
+% for ii = 1:satAmount;
+%     for kk = 1:length(shifted_delays_PR);
+%         % generate correlators bank signals of Pseudo Random Sequences
+%         signal_shiftedPR2(:,kk,ii) = gen_signal2(tau + shifted_delays_PR(kk), id(:,ii), pulse, Lc, Ti, Nc);
+%     end
+% end
 
 % Set of possible Line of Sight signals, each one with a different pulse
 % delay - for further estimation
-signal_LOS_copies = zeros(2046, length(shifted_delays_PR), satAmount);
-for ii = 1:satAmount;
-    for kk = 1:length(LOS_delays)
-        signal_LOS_copies(:,kk,ii) = gen_signal(tau + LOS_delays(kk), id(:,ii), pulse, Lc, Ti, Nc);
-    end
-end
+% signal_LOS_copies = zeros(2046, length(shifted_delays_PR), satAmount);
+signal_LOS_copies = correlator_banks(tau, LOS_delays, id, pulse, Lc, ...
+                                    Ti, Nc, satAmount, 'signal_LOS_copies', 0);
+% for ii = 1:satAmount;
+%     for kk = 1:length(LOS_delays)
+%         signal_LOS_copies(:,kk,ii) = gen_signal(tau + LOS_delays(kk), id(:,ii), pulse, Lc, Ti, Nc);
+%     end
+% end
 
-signal_LOS_copies2 = zeros(22506, length(shifted_delays_PR), satAmount);
-for ii = 1:satAmount;
-    for kk = 1:length(LOS_delays)
-        signal_LOS_copies2(:,kk,ii) = gen_signal2(tau + LOS_delays(kk), id(:,ii), pulse, Lc, Ti, Nc);
-    end
-end
+% signal_LOS_copies2 = zeros(22506, length(shifted_delays_PR), satAmount);
+
+signal_LOS_copies2 = correlator_banks(tau, LOS_delays, id, pulse, Lc, ...
+                                    Ti, Nc, satAmount, 'signal_LOS_copies2', 1);
+% for ii = 1:satAmount;
+%     for kk = 1:length(LOS_delays)
+%         signal_LOS_copies2(:,kk,ii) = gen_signal2(tau + LOS_delays(kk), id(:,ii), pulse, Lc, Ti, Nc);
+%     end
+% end
 
 phaseTx = [-63 -2 71]*pi/180;
 phaseTx = sort(phaseTx, 'descend');
