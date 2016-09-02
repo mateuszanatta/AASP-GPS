@@ -71,7 +71,7 @@ function [mSignal_Delayed] = correlator_banks(pTau, pDelay, pCACode, pPulse, pCo
                 end
             end
         end
-        
+
         %Defines the variable name to be stored in the .mat file.
         sVarName.(pBankName) = mSignal_Delayed;
         

@@ -7,6 +7,7 @@ warning('off','all')
 warning
 
 addpath CorrelatorBanks
+addpath Functions
 
 %% code parameters
 
@@ -176,27 +177,28 @@ for idrmse = 1:iterationsRMSE;
         %% AWGN transmission
 
         % White Noise standard deviation - SNR calculation
-        sigma = 10^(-SNR(idxSNR)/20)/sqrt(2);
+        %sigma = 10^(-SNR(idxSNR)/20)/sqrt(2);
 
         % Draw ZMCSCG (zero mean) WHITE noise with variance sigma^2
-        whiteNoise = (randn(size(signal_tx))+ 1*1i*randn(size(signal_tx)))*sigma;
-
+        whiteNoise = generateWhiteNoise(size(signal_tx), SNR(idxSNR));
+        
         % Received Signal
         signal_rx = signal_tx + whiteNoise;
         
         % Draw ZMCSCG (zero mean) WHITE noise with variance sigma^2 - CONC
-        whiteNoise_conc = (randn(size(signal_tx_concat))+ 1*1i*randn(size(signal_tx_concat)))*sigma;
+        whiteNoise_conc = generateWhiteNoise(size(signal_tx_concat), SNR(idxSNR));
+        
         % Received Signal one antenna CONC
         signal_rx_conc = signal_tx_concat + whiteNoise_conc;
         
         % Matricial Noise
-        whiteNoise_M1 = (randn(size(X0_1))+ 1*1i*randn(size(X0_1)))*sigma;
+        whiteNoise_M1 = generateWhiteNoise(size(X0_1), SNR(idxSNR));
         
-        whiteNoise_M2 = (randn(size(X0_2))+ 1*1i*randn(size(X0_2)))*sigma;
+        whiteNoise_M2 = generateWhiteNoise(size(X0_2), SNR(idxSNR));
         
-        whiteNoise_conc = (randn(size(X0_conc))+ 1*1i*randn(size(X0_conc)))*sigma;
+        whiteNoise_conc = generateWhiteNoise(size(X0_conc), SNR(idxSNR));
         
-        whiteNoise_conc_5 = (randn(size(X0_conc_5))+ 1*1i*randn(size(X0_conc_5)))*sigma;
+        whiteNoise_conc_5 =generateWhiteNoise(size(X0_conc_5), SNR(idxSNR));
         
         % Received Signal Multiple Antennas
         % 5
