@@ -34,7 +34,7 @@ lambda = 3e8/B;
 delta = lambda/2;
 
 % oversampling factor pulse (sampling precision of pulse relative to bandwidth)
-rho_pulse=100.0;
+rho_pulse=1000.0;
 
 %% C/D parameters 
 
@@ -84,43 +84,21 @@ tau = (0.0:Ts:To-Ts)';
 
 signal_shiftedPR = correlator_banks(tau, shifted_delays_PR, id, pulse, Lc, ...
                                     Ti, Nc, satAmount, 'signal_shiftedPR', 0);
-% for ii = 1:satAmount;
-%     for kk = 1:length(shifted_delays_PR);
-%         % generate correlators bank signals of Pseudo Random Sequences
-%         signal_shiftedPR(:,kk,ii) = gen_signal(tau + shifted_delays_PR(kk), id(:,ii), pulse, Lc, Ti, Nc);
-%     end
-% end
 
 % signal_shiftedPR2 = zeros(22506, length(shifted_delays_PR), satAmount);
 signal_shiftedPR2 = correlator_banks(tau, shifted_delays_PR, id, pulse, Lc, ...
                                     Ti, Nc, satAmount, 'signal_shiftedPR2', 1);
-% for ii = 1:satAmount;
-%     for kk = 1:length(shifted_delays_PR);
-%         % generate correlators bank signals of Pseudo Random Sequences
-%         signal_shiftedPR2(:,kk,ii) = gen_signal2(tau + shifted_delays_PR(kk), id(:,ii), pulse, Lc, Ti, Nc);
-%     end
-% end
 
 % Set of possible Line of Sight signals, each one with a different pulse
 % delay - for further estimation
 % signal_LOS_copies = zeros(2046, length(shifted_delays_PR), satAmount);
 signal_LOS_copies = correlator_banks(tau, LOS_delays, id, pulse, Lc, ...
                                     Ti, Nc, satAmount, 'signal_LOS_copies', 0);
-% for ii = 1:satAmount;
-%     for kk = 1:length(LOS_delays)
-%         signal_LOS_copies(:,kk,ii) = gen_signal(tau + LOS_delays(kk), id(:,ii), pulse, Lc, Ti, Nc);
-%     end
-% end
 
 % signal_LOS_copies2 = zeros(22506, length(shifted_delays_PR), satAmount);
 
 signal_LOS_copies2 = correlator_banks(tau, LOS_delays, id, pulse, Lc, ...
                                     Ti, Nc, satAmount, 'signal_LOS_copies2', 1);
-% for ii = 1:satAmount;
-%     for kk = 1:length(LOS_delays)
-%         signal_LOS_copies2(:,kk,ii) = gen_signal2(tau + LOS_delays(kk), id(:,ii), pulse, Lc, Ti, Nc);
-%     end
-% end
 
 phaseTx = [-63 -2 71]*pi/180;
 phaseTx = sort(phaseTx, 'descend');
@@ -158,8 +136,10 @@ M1 = 4;
 M2 = 16;
 
 % Generate Antena Array model - Steering Matrix
-A1 = array_matr_Rd(phaseTx, M1, 1);
-A2 = array_matr_Rd(phaseTx, M2, 1);
+% A1 = array_matr_Rd(phaseTx, M1, 1);
+A1 = generate_steering_matrix(phaseTx, M1);
+% A2 = array_matr_Rd(phaseTx, M2, 1);
+A2 = generate_steering_matrix(phaseTx, M2);
 
 % Receveid Signal with multiple antennas - Noise still to be added
 X0_1 = A1*transpose(signal_tx_MA);
@@ -215,33 +195,38 @@ for idrmse = 1:iterationsRMSE;
                 
         % Estimating the noisy subspace - Signal Processing through SVD
         % 5
-        Us_5 = est_sigsubsp_classic(X_5,satAmount);
+%         Us_5 = est_sigsubsp_classic(X_5,satAmount);
+        Us_5 = estimate_signal_subspace(X_5, satAmount);
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 CONC
-        Us_conc_5 = est_sigsubsp_classic(X_conc_5,satAmount);
+%         Us_conc_5 = est_sigsubsp_classic(X_conc_5,satAmount);
+        Us_conc_5 = estimate_signal_subspace(X_conc_5, satAmount);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16
-        Us_2 = est_sigsubsp_classic(X_16,satAmount);
+%         Us_16 = est_sigsubsp_classic(X_16,satAmount);
+        Us_16 = estimate_signal_subspace(X_16, satAmount);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 CONC
-        Us_conc_16 = est_sigsubsp_classic(X_conc_16,satAmount);
+%         Us_conc_16 = est_sigsubsp_classic(X_conc_16,satAmount);
+        Us_conc_16 = estimate_signal_subspace(X_conc_16, satAmount);
        
+        %% Estimate DoA
         % DOA (Direction of Arrival) Estimation
         % 5
-        phase_est_5 = standard_esprit_Rd(Us_5,M1);
-        phase_est_5 = sort(phase_est_5,'descend');
+        phase_est_5 = ESPRIT(Us_5);%standard_esprit_Rd(Us_5,M1);
+%         phase_est_5 = sort(phase_est_5,'descend');
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 conc
-        phase_est_conc_5 = standard_esprit_Rd(Us_conc_5,M1);
-        phase_est_conc_5 = sort(phase_est_conc_5,'descend');
+        phase_est_conc_5 = ESPRIT(Us_conc_5);%standard_esprit_Rd(Us_conc_5,M1);
+%         phase_est_conc_5 = sort(phase_est_conc_5,'descend');
         % ----------------------------------------------------------------------------------------------------------------------
         % 16
-        phase_est_16 = standard_esprit_Rd(Us_2,M2);
-        phase_est_16 = sort(phase_est_16,'descend');
+        phase_est_16 = ESPRIT(Us_16);%standard_esprit_Rd(Us_2,M2);
+%         phase_est_16 = sort(phase_est_16,'descend');
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 Conc
-        phase_est_conc_16 = standard_esprit_Rd(Us_conc_16,M2);
-        phase_est_conc_16 = sort(phase_est_conc_16,'descend');
+        phase_est_conc_16 = ESPRIT(Us_conc_16);%standard_esprit_Rd(Us_conc_16,M2);
+%         phase_est_conc_16 = sort(phase_est_conc_16,'descend');
         
         % Estimated DOAS for multiple antennas with different SNRs
         % ----------------------------------------------------------------------------------------------------------------------
@@ -254,37 +239,17 @@ for idrmse = 1:iterationsRMSE;
         
         % Once the phi_est is computed we can generate back the matriz A
        % ----------------------------------------------------------------------------------------------------------------------
-        A_est_5 = array_matr_Rd(phase_est_5,M1);
-        A_est_conc_5 = array_matr_Rd(phase_est_conc_5,M1);
-        
-        for ii = 1:satAmount;
-            T = GetFocusedVIT(phase_est_5(ii)*180/pi, delta, M1, 0.8);
-            X_vit_5 = T*X_5;
-            U_vit_5 = est_sigsubsp_classic(X_vit_5, 1);
-            phase_vit_5(ii) = standard_esprit_Rd(U_vit_5,M1);
-            a_vit_5 = array_matr_Rd(phase_vit_5(ii),M1);
-            S_vit_5(ii,:) = a_vit_5'*X_vit_5;
-            
-%             [ Pw, theta, PwMusic ] = calculaCapon( X_5, M1, delta, lambda );
-%             figure;
-%             plot(theta, Pw, 'r', theta, PwMusic);
-%             
-%             [ Pw2, theta2, PwMusic2 ] = calculaCapon( X_vit_5, M1, delta, lambda );
-%             figure;
-%             plot(theta2, Pw2,'r', theta2, PwMusic2);
-        end
+%         A_est_5 = array_matr_Rd(phase_est_5,M1);
+        A_est_5 = generate_steering_matrix(phase_est_5, M1);
+%         A_est_conc_5 = array_matr_Rd(phase_est_conc_5,M1);
+        A_est_conc_5 = generate_steering_matrix(phase_est_conc_5, M1);
         
         % ----------------------------------------------------------------------------------------------------------------------
-        A_est_16 = array_matr_Rd(phase_est_16,M2);
-        A_est_conc_16 = array_matr_Rd(phase_est_conc_16,M2);
+%         A_est_16 = array_matr_Rd(phase_est_16,M2);
+        A_est_16 = generate_steering_matrix(phase_est_16, M2);
+%         A_est_conc_16 = array_matr_Rd(phase_est_conc_16,M2);
+        A_est_conc_16 = generate_steering_matrix(phase_est_conc_16, M2);
         
-        for ii = 1:satAmount;
-            T = GetFocusedVIT(phase_est_16(ii)*180/pi, 0.5, M2, 0.8);
-            X_vit_16 = T*X_16;
-            
-            a_vit_16 = array_matr_Rd(0,M2);
-            S_vit_16(ii,:) = a_vit_16'*X_vit_16;
-        end
         
         % Generate Signal Matrix - Moore-Penrose Pseudo Inverse
         % ----------------------------------------------------------------------------------------------------------------------
@@ -309,85 +274,103 @@ for idrmse = 1:iterationsRMSE;
         
         % Apply Forward Backward Averaging to Signal with multiple Antennas
         
-        % 5 SPS + FBA + Concat
-        X_fba_5 = dofba_tensor(X_conc_5);
+        % 5 SPS + FBA
+%         X_fba_5 = dofba_tensor(X_conc_5);
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 FBA
-        X_fba_5 = dofba_tensor(X_5);
+%         X_fba_5 = dofba_tensor(X_5);
+        X_fba_5 = FBA(X_5);
         % ----------------------------------------------------------------------------------------------------------------------
-        % 16 SPS + FBA + CONC
-        X_fba = dofba_tensor(X_conc_16);
+        % 16 SPS + FBA
+%         X_fba = dofba_tensor(X_conc_16);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 FBA
-        X_fba_16 = dofba_tensor(X_16);
+%         X_fba_16 = dofba_tensor(X_16);
+        X_fba_16 = FBA(X_16);
         
 
         % L determines how the antennas in the array are selected
-        L1 = 1;
-        L2 = 1;
+%         L1 = 1;
+%         L2 = 1;
         
         % Apply Spatial Smoothing through Signal
-        % 5 SPS + FBA + CONC
-        X_fba_SS_5 = spatialsmooth_meastensor(X_fba_5,L1);
+        % 5 SPS + FBA
+%         X_fba_SS_5 = spatialsmooth_meastensor(X_fba_5,L1);
+        X_fba_SS_5 = SPS(X_fba_5);
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 SPS
-        X_SS_5 = spatialsmooth_meastensor(X_5,L1);
+%         X_SS_5 = spatialsmooth_meastensor(X_5,L1);
+        X_SS_5 = SPS(X_5);
         % ----------------------------------------------------------------------------------------------------------------------
-        % 16 SPS + FBA + CONC
-        X_fba_SS = spatialsmooth_meastensor(X_fba,L2);
+        % 16 SPS + FBA
+%         X_fba_SS_16 = spatialsmooth_meastensor(X_fba_16,L2);
+        X_fba_SS_16 = SPS(X_fba_16);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 SPS
-        X_SS_16 = spatialsmooth_meastensor(X_16,L2);
+%         X_SS_16 = spatialsmooth_meastensor(X_16,L2);
+        X_SS_16 = SPS(X_16);
         
         % Low Rank approximation through SVD
         % ----------------------------------------------------------------------------------------------------------------------
-        % 5 FBA SPS CONC
-        Us_fba_SS_5 = est_sigsubsp_classic(X_fba_SS_5, satAmount);
+        % 5 FBA SPS
+%         Us_fba_SS_5 = est_sigsubsp_classic(X_fba_SS_5, satAmount);
+        Us_fba_SS_5 = estimate_signal_subspace(X_fba_SS_5, satAmount);
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 FBA 
-        Us_fba_5 = est_sigsubsp_classic(X_fba_5, satAmount);
+%         Us_fba_5 = est_sigsubsp_classic(X_fba_5, satAmount);
+        Us_fba_5 = estimate_signal_subspace(X_fba_5, satAmount);
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 SPS 
-        Us_SS_5 = est_sigsubsp_classic(X_SS_5, satAmount);
+%         Us_SS_5 = est_sigsubsp_classic(X_SS_5, satAmount);
+        Us_SS_5 = estimate_signal_subspace(X_SS_5, satAmount);
         % ----------------------------------------------------------------------------------------------------------------------
-        % 16 FBA SPS CONC
-        Us_fba_SS = est_sigsubsp_classic(X_fba_SS, satAmount);
+        % 16 FBA SPS
+%         Us_fba_SS = est_sigsubsp_classic(X_fba_SS_16, satAmount);
+        Us_fba_SS = estimate_signal_subspace(X_fba_SS_16, satAmount);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 FBA
-        Us_fba_16 = est_sigsubsp_classic(X_fba_16, satAmount);
+%         Us_fba_16 = est_sigsubsp_classic(X_fba_16, satAmount);
+        Us_fba_16 = estimate_signal_subspace(X_fba_16, satAmount);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 SPS
-        Us_SS_16 = est_sigsubsp_classic(X_SS_16, satAmount);
+%         Us_SS_16 = est_sigsubsp_classic(X_SS_16, satAmount);
+        Us_SS_16 = estimate_signal_subspace(X_SS_16, satAmount);
 
         % Estimated Direction of Arrivals
-        % 5 SPS + FBA CONC
-        phi_fba_SS_est_5 = standard_esprit_Rd(Us_fba_SS_5,M1-L1+1);
-        phi_fba_SS_est_5 = sort(phi_fba_SS_est_5,'descend');
+        % 5 SPS + FBA
+%         phi_fba_SS_est_5 = standard_esprit_Rd(Us_fba_SS_5,M1-L1+1);
+        phi_fba_SS_est_5 = ESPRIT(Us_fba_SS_5);
+%         phi_fba_SS_est_5 = sort(phi_fba_SS_est_5,'descend');
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 FBA
-        phi_fba_5 = standard_esprit_Rd(Us_fba_5,M1-L1+1);
-        phi_fba_5 = sort(phi_fba_5,'descend');
+%         phi_fba_5 = standard_esprit_Rd(Us_fba_5,M1-L1+1);
+        phi_fba_5 = ESPRIT(Us_fba_5);
+%         phi_fba_5 = sort(phi_fba_5,'descend');
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 SPS
-        phi_SS_5 = standard_esprit_Rd(Us_SS_5,M1-L1+1);
-        phi_SS_5 = sort(phi_SS_5,'descend');
+%         phi_SS_5 = standard_esprit_Rd(Us_SS_5,M1-L1+1);
+        phi_SS_5 = ESPRIT(Us_SS_5);
+%         phi_SS_5 = sort(phi_SS_5,'descend');
         % ----------------------------------------------------------------------------------------------------------------------
-        % 16 FBA SPS CONC
-        phi_fba_SS_est_16 = standard_esprit_Rd(Us_fba_SS,M2-L2+1);
-        phi_fba_SS_est_16 = sort(phi_fba_SS_est_16,'descend');
+        % 16 FBA SPS
+%         phi_fba_SS_est_16 = standard_esprit_Rd(Us_fba_SS,M2-L2+1);
+        phi_fba_SS_est_16 = ESPRIT(Us_fba_SS);
+%         phi_fba_SS_est_16 = sort(phi_fba_SS_est_16,'descend');
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 FBA
-        phi_fba_16 = standard_esprit_Rd(Us_fba_16,M2-L2+1);
-        phi_fba_16 = sort(phi_fba_16,'descend');
+%         phi_fba_16 = standard_esprit_Rd(Us_fba_16,M2-L2+1);
+        phi_fba_16 = ESPRIT(Us_fba_16);
+%         phi_fba_16 = sort(phi_fba_16,'descend');
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 SPS
-        phi_SS_16 = standard_esprit_Rd(Us_SS_16,M2-L2+1);
-        phi_SS_16 = sort(phi_SS_16,'descend');
+%         phi_SS_16 = standard_esprit_Rd(Us_SS_16,M2-L2+1);
+        phi_SS_16 = ESPRIT(Us_SS_16);
+%         phi_SS_16 = sort(phi_SS_16,'descend');
         
         
         % Estimated DOAS for multiple antennas with different SNRs (SPS/FBA)
         % ----------------------------------------------------------------------------------------------------------------------
-        % 5 SPS + FBA + CONC
+        % 5 SPS + FBA
         phase_MA_fba_SS_est_5(idxSNR,:) = phi_fba_SS_est_5;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 FBA
@@ -396,7 +379,7 @@ for idrmse = 1:iterationsRMSE;
         % 5 SPS
         phase_MA_SS_5(idxSNR,:) = phi_SS_5;
         % ----------------------------------------------------------------------------------------------------------------------
-        % 16 FBA SPS CONC
+        % 16 FBA SPS
         phase_MA_fba_SS_est(idxSNR,:) = phi_fba_SS_est_16;
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 FBA
@@ -405,43 +388,34 @@ for idrmse = 1:iterationsRMSE;
         % 16 SPS
         phase_MA_SS_16(idxSNR,:) = phi_SS_16;
         
-        %         for ii = 1:satAmount;
-            
-            % colocar a doa
-            T = GetFocusedVIT(phi_fba_SS_est_16(2), 0.5, M2, 0.8);
-
-            X_vit_16 = T*X_conc_16;
-
-%             Us_vit = est_sigsubsp_classic(X_vit,satAmount);
-
-            % DOA (Direction of Arrival) Estimation
-%             phase_est_vit = standard_esprit_Rd(Us_vit,M);
-%             phase_est_vit(ii) = min(abs(phase_est_vit));
-%             phase_est_vit_corrected(ii) = phase_est_vit(ii) + phase_est(ii);
-%         end
-        
-%         phase_MA_fba_SS_est(idxSNR,:) = phase_est_vit_corrected;
-
+        %% Matrix A
         % Once the phi_est is computed we can generate back the matriz A
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 FBA SPS CONC
-        A_est_fba_SS_5 = array_matr_Rd(phi_fba_SS_est_5,M1);
+%         A_est_fba_SS_5 = array_matr_Rd(phi_fba_SS_est_5,M1);
+        A_est_fba_SS_5 = generate_steering_matrix(phi_fba_SS_est_5, M1);
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 FBA
-        A_est_fba_5 = array_matr_Rd(phi_fba_5,M1);
+%         A_est_fba_5 = array_matr_Rd(phi_fba_5,M1);
+        A_est_fba_5 = generate_steering_matrix(phi_fba_5, M1);
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 SPS
-        A_est_SS_5 = array_matr_Rd(phi_SS_5,M1);
+%         A_est_SS_5 = array_matr_Rd(phi_SS_5,M1);
+        A_est_SS_5 = generate_steering_matrix(phi_SS_5, M1);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 FBA SPS CONC
-        A_est_fba_SS_16 = array_matr_Rd(phi_fba_SS_est_16,M2);
+%         A_est_fba_SS_16 = array_matr_Rd(phi_fba_SS_est_16,M2);
+        A_est_fba_SS_16 = generate_steering_matrix(phi_fba_SS_est_16, M2);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 FBA
-        A_est_fba_16 = array_matr_Rd(phi_fba_16,M2);
+%         A_est_fba_16 = array_matr_Rd(phi_fba_16,M2);
+        A_est_fba_16 = generate_steering_matrix(phi_fba_16, M2);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 SPS
-        A_est_SS_16 = array_matr_Rd(phi_SS_16,M2);
-
+%         A_est_SS_16 = array_matr_Rd(phi_SS_16,M2);
+        A_est_SS_16 = generate_steering_matrix(phi_SS_16, M2);
+        
+        %% Signal Matrix
         % Generate Signal Matrix - Moore-Penrose Pseudo Inverse
         
         % 5 FBA SPS CONC
@@ -461,12 +435,7 @@ for idrmse = 1:iterationsRMSE;
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 SS
         S_est_SS_16 = pinv(A_est_SS_16)*X_16;
-        
-S_est_fba_SS_vit = pinv(A_est_fba_SS_16)*X_vit_16;
-        
-%% /////////////             /////////////////
-%                DLL Begin??
-% /////////////             /////////////////
+               
     %% Lowest Correlation Estimation Noise Free Environment
 
         % Offset correlators - Unique Antenna Model;
@@ -482,7 +451,7 @@ S_est_fba_SS_vit = pinv(A_est_fba_SS_16)*X_vit_16;
             % Correlation Bank Matched to a set of different possible LOS signals
             corr_matched_bank2(:,:,ii) = signal_LOS_copies2(:,:,ii)'*signal_shiftedPR2(:,:,ii);
         end
-        [rowArgConc, ~, ~] = size(corr_matched_bank2);
+%         [rowArgConc, ~, ~] = size(corr_matched_bank2);
 
         % Correlation between Transmitted signal and PR signals delayed
         % One tries to find here the lowest value on deviance. This value
@@ -500,6 +469,7 @@ S_est_fba_SS_vit = pinv(A_est_fba_SS_16)*X_vit_16;
         % Over this step one will estimate the delay that corresponds to
         % the transmitted one. The lowest value indicates the estimated
         % value.
+        phase_estimation_n_free = zeros(length(offAngle), satAmount);
         for ii = 1:satAmount;
             offSetEstimator = sum(sqrt(imag(deviance_LOS(:,:,ii)).^2));
             [~, offSetIdx] = min(offSetEstimator);
@@ -512,346 +482,136 @@ S_est_fba_SS_vit = pinv(A_est_fba_SS_16)*X_vit_16;
         %%%%%% Same estimation as the one above, but in a Noisy channel
         %%%%%% (AWGN)
 
-        % Correlation between Transmitted signal and PR signals delayed
-        [rowArg, ~, ~] = size(corr_matched_bank);
-        for ii = 1:satAmount;
-            for kk = 1:length(offAngle);
-                corr_signal_rx_bank(:,:,ii) = (signal_rx*offSetCorr(kk))'*signal_shiftedPR(:,:,ii);
-
-                % Delay Deviance between copies of Bank and Transmitted Signal
-                temporarySub = repmat(corr_signal_rx_bank(:,:,ii), rowArg, 1);
-                ml_argument_rx = corr_matched_bank(:,:,ii) - temporarySub;
-                deviance_LOS_rx(:,kk,ii) = sum(sqrt(ml_argument_rx.^2),2);  
-            end
-        end
+%         % Correlation between Transmitted signal and PR signals delayed
+%         [rowArg, ~, ~] = size(corr_matched_bank);
         
-        % Over this step one will estimate the delay that corresponds to
-        % the transmitted one. The lowest value indicates the estimated
-        % value.
-        for ii = 1:satAmount;
-            offSetEstimator = sum(sqrt(imag(deviance_LOS_rx(:,:,ii)).^2));
-            [~, offSetIdx] = min(offSetEstimator);
-
-            deviance_LOS_est_rx(:,:,ii,idxSNR) = deviance_LOS_rx(:, offSetIdx,ii);
-            
-            % Estimating transmitted signal phases. This algorithm does not
-            % consist in a classic DOA estimation algorithm, but only a Maximum
-            % Likelihood Estimator to find the phase as well.
-            phase_estimation(:,ii) = offAngle(offSetIdx);
-            phase_est_DOA(:,ii,idxSNR) = offAngle(offSetIdx);
-        end
-        
-        phaseTx_est(idxSNR,:) = phase_estimation;
-        
+        %Estimates de deviance of the LOS signal and phase
+        [deviance_LOS_one, phase_est] = deviance_estimator(satAmount, signal_rx, ...
+                                                signal_shiftedPR, offAngle, corr_matched_bank, 0);
+        phaseTx_est(idxSNR, :) = phase_est;
+        deviance_LOS_est_rx(:, :, :, idxSNR) = deviance_LOS_one;
  %---------------------------------------------------------------------------------
  % One antenna - CONC
         
         % Correlation between Transmitted signal and PR signals delayed
         [rowArg, ~, ~] = size(corr_matched_bank);
-        for ii = 1:satAmount;
-            for kk = 1:length(offAngle);
-                corr_signal_rx_bank_conc(:,:,ii) = (signal_rx_conc*offSetCorr(kk))'*signal_shiftedPR2(:,:,ii);
-
-                % Delay Deviance between copies of Bank and Transmitted Signal
-                temporarySub_conc = repmat(corr_signal_rx_bank_conc(:,:,ii), rowArg, 1);
-                ml_argument_rx_conc = corr_matched_bank(:,:,ii) - temporarySub_conc;
-                deviance_LOS_rx_conc(:,kk,ii) = sum(sqrt(ml_argument_rx_conc.^2),2);  
-            end
-        end
         
-        % Over this step one will estimate the delay that corresponds to
-        % the transmitted one. The lowest value indicates the estimated
-        % value.
-        for ii = 1:satAmount;
-            offSetEstimator_conc = sum(sqrt(imag(deviance_LOS_rx_conc(:,:,ii)).^2));
-            [~, offSetIdx_conc] = min(offSetEstimator_conc);
-
-            deviance_LOS_est_rx_conc(:,:,ii,idxSNR) = deviance_LOS_rx_conc(:, offSetIdx_conc,ii);
-            
-            % Estimating transmitted signal phases. This algorithm does not
-            % consist in a classic DOA estimation algorithm, but only a Maximum
-            % Likelihood Estimator to find the phase as well.
-            phase_estimation_conc(:,ii) = offAngle(offSetIdx_conc);
-            phase_est_DOA_conc(:,ii,idxSNR) = offAngle(offSetIdx_conc);
-        end
-        
-        phaseTx_est_conc(idxSNR,:) = phase_estimation_conc;
+        %Estimates de deviance of the LOS signal and phase
+        [deviance_LOS_one_conc, phase_est_conc] = deviance_estimator(satAmount, signal_rx_conc, ...
+                                                signal_shiftedPR2, offAngle, corr_matched_bank2, 0);
+        phaseTx_est_conc(idxSNR, :) = phase_est_conc;
+        deviance_LOS_est_rx_conc(:, :, :, idxSNR) = deviance_LOS_one_conc;
        
         %% Correlator Esimator Multiple Antennas       
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 ANTENAS
         % Correlation between Estimated signal and PR signals delayed   
         S_calc_1 = transpose(S_est_5);
-        for ii = 1:satAmount;
-        	corr_S_est_bank_1(:,:,ii) = (S_calc_1(:,ii)*exp(-1j*phase_est_5(ii)))'*signal_shiftedPR(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            tempSub_MA_1 = repmat(corr_S_est_bank_1(:,:,ii), rowArg, 1);
-            S_est_argument_rx_1 = corr_matched_bank(:,:,ii) - tempSub_MA_1;
-            deviance_LOS_S_est_1(:,:,ii) = sum(sqrt(S_est_argument_rx_1.^2),2);
-        end
+       
+        [deviance_LOS_est_MA_5, ~] = deviance_estimator(satAmount, S_calc_1, ...
+                                         signal_shiftedPR, phase_est_5, corr_matched_bank, 1);
         
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_1 = sum(sqrt(imag(deviance_LOS_S_est_1(:,:,ii)).^2));
-            [~, offSetIdx_S_est_1] = min(offSetEstimator_S_est_1);
-
-            deviance_LOS_S_est_MA_5(:,:,ii,idxSNR) = deviance_LOS_S_est_1(:, offSetIdx_S_est_1,ii);
-        end
+        deviance_LOS_S_est_MA_5(:,:,:,idxSNR) = deviance_LOS_est_MA_5;
+        
         % 5 ANTENAS - Known Steering Matrix
         % Correlation between Estimated signal and PR signals delayed Using the already Knwon Steering Matrix   
         S_Known = transpose(S_5);
-        for ii = 1:satAmount;
-        	corr_S_Known_bank_1(:,:,ii) = (S_Known(:,ii)*exp(-1j*phase_est_5(ii)))'*signal_shiftedPR(:,:,ii);
 
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            tempSub_Known_MA_5 = repmat(corr_S_Known_bank_1(:,:,ii), rowArg, 1);
-            S_Known_argument_rx_5 = corr_matched_bank(:,:,ii) - tempSub_Known_MA_5;
-            deviance_LOS_S_Known_5(:,:,ii) = sum(sqrt(S_Known_argument_rx_5.^2),2);
-        end
+        [deviance_LOS_Known_est_MA_5, ~] = deviance_estimator(satAmount, S_Known, ...
+                                         signal_shiftedPR, phase_est_5, corr_matched_bank, 1);
         
-        for ii = 1:satAmount;
-            offSetEstimator_S_Known_5 = sum(sqrt(imag(deviance_LOS_S_Known_5(:,:,ii)).^2));
-            [~, offSetIdx_S_Known_5] = min(offSetEstimator_S_Known_5);
-
-            deviance_LOS_S_Known_MA_5(:,:,ii,idxSNR) = deviance_LOS_S_Known_5(:, offSetIdx_S_Known_5,ii);
-        end
+        deviance_LOS_S_Known_MA_5(:,:,:,idxSNR) = deviance_LOS_Known_est_MA_5;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 ANTENAS CONC
         % Correlation between Estimated signal and PR signals delayed   
         S_calc_conc_5 = transpose(S_est_conc_5);
-        for ii = 1:satAmount;
-        	corr_S_est_bank_conc_5(:,:,ii) = (S_calc_conc_5(:,ii)*exp(-1j*phase_est_conc_5(ii)))'*signal_shiftedPR2(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            tempSub_MA_conc_5 = repmat(corr_S_est_bank_conc_5(:,:,ii), rowArgConc, 1);
-            S_est_argument_rx_conc_5 = corr_matched_bank2(:,:,ii) - tempSub_MA_conc_5;
-            deviance_LOS_S_est_conc_5(:,:,ii) = sum(sqrt(S_est_argument_rx_conc_5.^2),2);
-        end
         
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_conc_5 = sum(sqrt(imag(deviance_LOS_S_est_conc_5(:,:,ii)).^2));
-            [~, offSetIdx_S_est_conc_5] = min(offSetEstimator_S_est_conc_5);
-
-            deviance_LOS_S_est_MA_conc_5(:,:,ii,idxSNR) = deviance_LOS_S_est_conc_5(:, offSetIdx_S_est_conc_5,ii);
-        end
-        % ----------------------------------------------------------------------------------------------------------------------
-        % 5 ANTENAS VIT
-        % Correlation between Estimated signal and PR signals delayed   
-        S_calc_vit_5 = transpose(S_vit_5);
-        for ii = 1:satAmount;
-        	corr_S_est_bank_vit_5(:,:,ii) = (S_calc_vit_5(:,ii)*exp(-1j*phase_vit_5(ii)))'*signal_shiftedPR(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            tempSub_MA_vit_5 = repmat(corr_S_est_bank_vit_5(:,:,ii), rowArg, 1);
-            S_est_argument_rx_vit_5 = corr_matched_bank(:,:,ii) - tempSub_MA_vit_5;
-            deviance_LOS_S_est_vit_5(:,:,ii) = sum(sqrt(S_est_argument_rx_vit_5.^2),2);
-        end
+        [deviance_LOS_est_MA_conc_5, ~] = deviance_estimator(satAmount, S_calc_conc_5, ...
+                                         signal_shiftedPR2, phase_est_conc_5, corr_matched_bank2, 1);
         
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_vit_5 = sum(sqrt(imag(deviance_LOS_S_est_vit_5(:,:,ii)).^2));
-            [~, offSetIdx_S_est_vit_5] = min(offSetEstimator_S_est_vit_5);
-
-            deviance_LOS_S_est_MA_vit_5(:,:,ii,idxSNR) = deviance_LOS_S_est_vit_5(:, offSetIdx_S_est_vit_5,ii);
-        end
+        deviance_LOS_S_est_MA_conc_5(:,:,:,idxSNR) = deviance_LOS_est_MA_conc_5;
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 ANTENAS
         S_calc_16 = transpose(S_est_16);
-        for ii = 1:satAmount;
-        	corr_S_est_bank_16(:,:,ii) = (S_calc_16(:,ii)*exp(-1j*phase_est_16(ii)))'*signal_shiftedPR(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            tempSub_MA_16 = repmat(corr_S_est_bank_16(:,:,ii), rowArg, 1);
-            S_est_argument_rx_16 = corr_matched_bank(:,:,ii) - tempSub_MA_16;
-            deviance_LOS_S_est_16(:,:,ii) = sum(sqrt(S_est_argument_rx_16.^2),2);
-        end
         
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_16 = sum(sqrt(imag(deviance_LOS_S_est_16(:,:,ii)).^2));
-            [~, offSetIdx_S_est_16] = min(offSetEstimator_S_est_16);
-
-            deviance_LOS_S_est_MA_16(:,:,ii,idxSNR) = deviance_LOS_S_est_16(:, offSetIdx_S_est_16,ii);
-        end
+        [deviance_LOS_est_MA_16, ~] = deviance_estimator(satAmount, S_calc_16, ...
+                                         signal_shiftedPR, phase_est_16, corr_matched_bank, 1);
+        
+        deviance_LOS_S_est_MA_16(:,:,:,idxSNR) = deviance_LOS_est_MA_16;
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 ANTENAS - Known Steering Matrix
         S_Known_16 = transpose(S_16);
-        for ii = 1:satAmount;
-        	corr_S_Known_bank_16(:,:,ii) = (S_Known_16(:,ii)*exp(-1j*phase_est_16(ii)))'*signal_shiftedPR(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            tempSub_Known_MA_16 = repmat(corr_S_Known_bank_16(:,:,ii), rowArg, 1);
-            S_Known_argument_rx_16 = corr_matched_bank(:,:,ii) - tempSub_Known_MA_16;
-            deviance_LOS_S_Known_16(:,:,ii) = sum(sqrt(S_Known_argument_rx_16.^2),2);
-        end
+       
+        [deviance_LOS_Known_MA_16, ~] = deviance_estimator(satAmount, S_Known_16, ...
+                                         signal_shiftedPR, phase_est_16, corr_matched_bank, 1);
         
-        for ii = 1:satAmount;
-            offSetEstimator_S_Known_16 = sum(sqrt(imag(deviance_LOS_S_Known_16(:,:,ii)).^2));
-            [~, offSetIdx_S_Known_16] = min(offSetEstimator_S_Known_16);
-
-            deviance_LOS_S_Known_MA_16(:,:,ii,idxSNR) = deviance_LOS_S_Known_16(:, offSetIdx_S_Known_16,ii);
-        end
+        deviance_LOS_S_Known_MA_16(:,:,:,idxSNR) = deviance_LOS_Known_MA_16;
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 ANTENAS CONC
         S_calc_conc = transpose(S_est_conc_16);
-        for ii = 1:satAmount;
-        	corr_S_est_bank_conc(:,:,ii) = (S_calc_conc(:,ii)*exp(-1j*phase_est_conc_16(ii)))'*signal_shiftedPR2(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            tempSub_MA_conc = repmat(corr_S_est_bank_conc(:,:,ii), rowArgConc, 1);
-            S_est_argument_rx_conc = corr_matched_bank2(:,:,ii) - tempSub_MA_conc;
-            deviance_LOS_S_est_conc(:,:,ii) = sum(sqrt(S_est_argument_rx_conc.^2),2);
-        end
         
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_conc = sum(sqrt(imag(deviance_LOS_S_est_conc(:,:,ii)).^2));
-            [~, offSetIdx_S_est_conc] = min(offSetEstimator_S_est_conc);
-
-            deviance_LOS_S_est_MA_conc(:,:,ii,idxSNR) = deviance_LOS_S_est_conc(:, offSetIdx_S_est_conc,ii);
-        end
+        [deviance_LOS_est_MA_conc, ~] = deviance_estimator(satAmount, S_calc_conc, ...
+                                         signal_shiftedPR2, phase_est_conc_16, corr_matched_bank2, 1);
         
+        deviance_LOS_S_est_MA_conc(:,:,:,idxSNR) = deviance_LOS_est_MA_conc;
         %% Correlator Esimator Multiple Antennas FBA + SPS
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 ANTENAS FBA SPS CONC
         % Correlation between Estimated signal and PR signals delayed
         S_calc_fba_SS_5 = transpose(S_est_fba_SS_5);
-        for ii = 1:satAmount;
-            corr_S_est_fba_SS_bank_5(:,:,ii) = (S_calc_fba_SS_5(:,ii)*exp(-1j*phi_fba_SS_est_5(ii)))'*signal_shiftedPR2(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            S_est_fba_SS_argument_rx_5 = bsxfun(@minus, corr_matched_bank2(:,:,ii), corr_S_est_fba_SS_bank_5(:,:,ii));
-            deviance_LOS_S_est_fba_SS_5(:,:,ii) = sum(sqrt(S_est_fba_SS_argument_rx_5.^2),2);  
-            
-        end
         
-        % Over this step one will estimate the delay that corresponds to
-        % the transmitted one. The lowest value indicates the estimated
-        % value.
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_fba_SS_5 = sum(sqrt(imag(deviance_LOS_S_est_fba_SS_5(:,:,ii)).^2));
-            [~, offSetIdx_S_est_fba_SS_5] = min(offSetEstimator_S_est_fba_SS_5);
-
-            deviance_LOS_S_est_fba_SS_MA_5(:,:,ii,idxSNR) = deviance_LOS_S_est_fba_SS_5(:, offSetIdx_S_est_fba_SS_5,ii);
-        end
+        [deviance_LOS_est_fba_SS_MA_5, ~] = deviance_estimator(satAmount, S_calc_fba_SS_5, ...
+                                         signal_shiftedPR2, phi_fba_SS_est_5, corr_matched_bank2, 1);
+        
+        deviance_LOS_S_est_fba_SS_MA_5(:,:,:,idxSNR) = deviance_LOS_est_fba_SS_MA_5;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 ANTENAS FBA
         % Correlation between Estimated signal and PR signals delayed
         S_calc_fba_5 = transpose(S_est_fba_5);
-        for ii = 1:satAmount;
-            corr_S_est_fba_bank_5(:,:,ii) = (S_calc_fba_5(:,ii)*exp(-1j*phi_fba_5(ii)))'*signal_shiftedPR(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            S_est_fba_argument_rx_5 = bsxfun(@minus, corr_matched_bank(:,:,ii), corr_S_est_fba_bank_5(:,:,ii));
-            deviance_LOS_S_est_fba_5(:,:,ii) = sum(sqrt(S_est_fba_argument_rx_5.^2),2);  
-            
-        end
-       
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_fba_5 = sum(sqrt(imag(deviance_LOS_S_est_fba_5(:,:,ii)).^2));
-            [~, offSetIdx_S_est_fba_5] = min(offSetEstimator_S_est_fba_5);
-
-            deviance_LOS_S_est_fba_MA_5(:,:,ii,idxSNR) = deviance_LOS_S_est_fba_5(:, offSetIdx_S_est_fba_5,ii);
-        end
+                
+        [deviance_LOS_est_fba_MA_5, ~] = deviance_estimator(satAmount, S_calc_fba_5, ...
+                                         signal_shiftedPR, phi_fba_5, corr_matched_bank, 1);
+        
+        deviance_LOS_S_est_fba_MA_5(:,:,:,idxSNR) = deviance_LOS_est_fba_MA_5;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 ANTENAS SS
         % Correlation between Estimated signal and PR signals delayed
         S_calc_SS_5 = transpose(S_est_SS_5);
-        for ii = 1:satAmount;
-            corr_S_est_SS_bank_5(:,:,ii) = (S_calc_SS_5(:,ii)*exp(-1j*phi_SS_5(ii)))'*signal_shiftedPR(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            S_est_SS_argument_rx_5 = bsxfun(@minus, corr_matched_bank(:,:,ii), corr_S_est_SS_bank_5(:,:,ii));
-            deviance_LOS_S_est_SS_5(:,:,ii) = sum(sqrt(S_est_SS_argument_rx_5.^2),2);  
-            
-        end
-       
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_SS_5 = sum(sqrt(imag(deviance_LOS_S_est_SS_5(:,:,ii)).^2));
-            [~, offSetIdx_S_est_SS_5] = min(offSetEstimator_S_est_SS_5);
-
-            deviance_LOS_S_est_SS_MA_5(:,:,ii,idxSNR) = deviance_LOS_S_est_SS_5(:, offSetIdx_S_est_SS_5,ii);
-        end
+        
+        [deviance_LOS_est_SS_MA_5, ~] = deviance_estimator(satAmount, S_calc_SS_5, ...
+                                         signal_shiftedPR, phi_SS_5, corr_matched_bank, 1);
+        
+        deviance_LOS_S_est_SS_MA_5(:,:,:,idxSNR) = deviance_LOS_est_SS_MA_5;
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 Antenas FBA SPS CONC
         % Correlation between Estimated signal and PR signals delayed
         S_calc_fba_SS_16 = transpose(S_est_fba_SS_16);
-        for ii = 1:satAmount;
-            corr_S_est_fba_SS_bank_16(:,:,ii) = (S_calc_fba_SS_16(:,ii)*exp(-1j*phi_fba_SS_est_16(ii)))'*signal_shiftedPR2(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            S_est_fba_SS_argument_rx_16 = bsxfun(@minus, corr_matched_bank2(:,:,ii), corr_S_est_fba_SS_bank_16(:,:,ii));
-            deviance_LOS_S_est_fba_SS_16(:,:,ii) = sum(sqrt(S_est_fba_SS_argument_rx_16.^2),2);  
-            
-        end
         
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_fba_SS_16 = sum(sqrt(imag(deviance_LOS_S_est_fba_SS_16(:,:,ii)).^2));
-            [~, offSetIdx_S_est_fba_SS_16] = min(offSetEstimator_S_est_fba_SS_16);
-
-            deviance_LOS_S_est_fba_SS_MA_16(:,:,ii,idxSNR) = deviance_LOS_S_est_fba_SS_16(:, offSetIdx_S_est_fba_SS_16,ii);
-        end
+        [deviance_LOS_est_fba_SS_MA_16, ~] = deviance_estimator(satAmount, S_calc_fba_SS_16, ...
+                                         signal_shiftedPR2, phi_fba_SS_est_16, corr_matched_bank2, 1);
+        
+        deviance_LOS_S_est_fba_SS_MA_16(:,:,:,idxSNR) = deviance_LOS_est_fba_SS_MA_16;
         
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 Antenas FBA
         % Correlation between Estimated signal and PR signals delayed
         S_calc_fba_16 = transpose(S_est_fba_16);
-        for ii = 1:satAmount;
-            corr_S_est_fba_16(:,:,ii) = (S_calc_fba_16(:,ii)*exp(-1j*phi_fba_16(ii)))'*signal_shiftedPR(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            S_est_fba_argument_rx_16 = bsxfun(@minus, corr_matched_bank(:,:,ii), corr_S_est_fba_16(:,:,ii));
-            deviance_LOS_S_est_fba_16(:,:,ii) = sum(sqrt(S_est_fba_argument_rx_16.^2),2);  
-            
-        end
         
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_fba_16 = sum(sqrt(imag(deviance_LOS_S_est_fba_16(:,:,ii)).^2));
-            [~, offSetIdx_S_est_fba_16] = min(offSetEstimator_S_est_fba_16);
-
-            deviance_LOS_S_est_fba_MA_16(:,:,ii,idxSNR) = deviance_LOS_S_est_fba_16(:, offSetIdx_S_est_fba_16,ii);
-        end
+        [deviance_LOS_est_fba_MA_16, ~] = deviance_estimator(satAmount, S_calc_fba_16, ...
+                                         signal_shiftedPR, phi_fba_16, corr_matched_bank, 1);
+        
+        deviance_LOS_S_est_fba_MA_16(:,:,:,idxSNR) = deviance_LOS_est_fba_MA_16;
         
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 Antenas SPS
         % Correlation between Estimated signal and PR signals delayed
         S_calc_SS_16 = transpose(S_est_SS_16);
-        for ii = 1:satAmount;
-            corr_S_est_SS_16(:,:,ii) = (S_calc_SS_16(:,ii)*exp(-1j*phi_SS_16(ii)))'*signal_shiftedPR(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            S_est_SS_argument_rx_16 = bsxfun(@minus, corr_matched_bank(:,:,ii), corr_S_est_SS_16(:,:,ii));
-            deviance_LOS_S_est_SS_16(:,:,ii) = sum(sqrt(S_est_SS_argument_rx_16.^2),2);  
-            
-        end
         
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_SS_16 = sum(sqrt(imag(deviance_LOS_S_est_SS_16(:,:,ii)).^2));
-            [~, offSetIdx_S_est_SS_16] = min(offSetEstimator_S_est_SS_16);
-
-            deviance_LOS_S_est_SS_MA_16(:,:,ii,idxSNR) = deviance_LOS_S_est_SS_16(:, offSetIdx_S_est_fba_16,ii);
-        end
+        [deviance_LOS_est_SS_MA_16, ~] = deviance_estimator(satAmount, S_calc_SS_16, ...
+                                         signal_shiftedPR, phi_SS_16, corr_matched_bank, 1);
         
-        % ----------------------------------------------------------------------------------------------------------------------
-        % 16 Antenas VIT
-        % Correlation between Estimated signal and PR signals delayed
-        S_calc_fba_SS_vit = transpose(S_est_fba_SS_vit);
-        for ii = 1:satAmount;
-            corr_S_est_fba_SS_bank_vit(:,:,ii) = (S_calc_fba_SS_vit(:,ii)*exp(-1j*phi_fba_SS_est_16(ii)))'*signal_shiftedPR2(:,:,ii);
-
-            % Delay Deviance between copies of Bank and Transmitted Signal
-            S_est_fba_SS_argument_rx_vit = bsxfun(@minus, corr_matched_bank2(:,:,ii), corr_S_est_fba_SS_bank_vit(:,:,ii));
-            deviance_LOS_S_est_fba_SS_vit(:,:,ii) = sum(sqrt(S_est_fba_SS_argument_rx_vit.^2),2);  
-            
-        end
-        
-        for ii = 1:satAmount;
-            offSetEstimator_S_est_fba_SS_vit = sum(sqrt(imag(deviance_LOS_S_est_fba_SS_vit(:,:,ii)).^2));
-            [~, offSetIdx_S_est_fba_SS_vit] = min(offSetEstimator_S_est_fba_SS_vit);
-
-            deviance_LOS_S_est_fba_SS_MA_vit(:,:,ii,idxSNR) = deviance_LOS_S_est_fba_SS_vit(:, offSetIdx_S_est_fba_SS_vit,ii);
-        end
+        deviance_LOS_S_est_SS_MA_16(:,:,:,idxSNR) = deviance_LOS_est_SS_MA_16;
     end
-    %% /////////////             /////////////////
-    %                DLL End??
-    % /////////////             /////////////////
     %%  DOA RMSE
     
     % Root Mean Square Error for Unique Antenna Model
@@ -874,7 +634,7 @@ S_est_fba_SS_vit = pinv(A_est_fba_SS_16)*X_vit_16;
     rmse_DOA_MA_fba_SS_est_16(:,:,idrmse) =  (phase_MA_fba_SS_est - rmse_temp_phase).^2;
     
     % Root Mean Square Error for Multiple Antenna Model plus SPS and FBA
-    rmse_DOA_MA_fba_SS_est_vit(:,:,idrmse) =  (phase_MA_fba_SS_est - rmse_temp_phase).^2;
+%     rmse_DOA_MA_fba_SS_est_vit(:,:,idrmse) =  (phase_MA_fba_SS_est - rmse_temp_phase).^2;
         
     %% Delay Estimation No Scheme per SNR
 
@@ -967,24 +727,24 @@ S_est_fba_SS_vit = pinv(A_est_fba_SS_16)*X_vit_16;
     % ----------------------------------------------------------------------------------------------------------------------
     % 5 ANTENAS VIT
     % Find delays for Multiple Antenna Schemes
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_vit_5] = min(real(deviance_LOS_S_est_MA_vit_5(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_est_vit_5(ii,snr) = LOS_delays(indx_S_est_vit_5); 
-        end
-    end
-
-    
-    % Calculate RMSE inner argument
-    argMin_S_est_vit_5 = repmat(signal_tx_delay', 1, length(SNR));
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            rmseArg_S_est_vit_5(:,:,ii,snr,idrmse) = (real(delay_S_est_vit_5) - argMin_S_est_vit_5).^2;
-        end
-    end
+%     for snr = 1:length(SNR);
+%         for ii = 1:satAmount;
+%             [~, indx_S_est_vit_5] = min(real(deviance_LOS_S_est_MA_vit_5(:,:,ii,snr)));
+%             
+%             % Delays retrieved here allow transmitted signal
+%             % reconstruction for different SNRs
+%             delay_S_est_vit_5(ii,snr) = LOS_delays(indx_S_est_vit_5); 
+%         end
+%     end
+% 
+%     
+%     % Calculate RMSE inner argument
+%     argMin_S_est_vit_5 = repmat(signal_tx_delay', 1, length(SNR));
+%     for snr = 1:length(SNR);
+%         for ii = 1:satAmount;
+%             rmseArg_S_est_vit_5(:,:,ii,snr,idrmse) = (real(delay_S_est_vit_5) - argMin_S_est_vit_5).^2;
+%         end
+%     end
     
     % ----------------------------------------------------------------------------------------------------------------------
     % 5 ANTENAS CONC
@@ -1193,25 +953,25 @@ S_est_fba_SS_vit = pinv(A_est_fba_SS_16)*X_vit_16;
     % ----------------------------------------------------------------------------------------------------------------------
     % 16 antenas VIT
     % Find delays for Multiple Antenna Schemes FBA + SS
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_SPS_FBA_vit] = min(real(deviance_LOS_S_est_fba_SS_MA_vit(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_fba_SS_est_vit(ii,snr) = LOS_delays(indx_S_est_SPS_FBA_vit); 
-        end
-    end
-
-%     delay_S__fba_SS_est = roundn(delay_S_est/Ts, -1)*Ts;
-    
-    % Calculate RMSE inner argument
-    argMin_S_fba_SS_est_vit = repmat(signal_tx_delay', 1, length(SNR));
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            rmseArg_S_est_fba_SS_vit(:,:,ii,snr,idrmse) = (real(delay_S_fba_SS_est_vit) - argMin_S_fba_SS_est_vit).^2;
-        end
-    end
+%     for snr = 1:length(SNR);
+%         for ii = 1:satAmount;
+%             [~, indx_S_est_SPS_FBA_vit] = min(real(deviance_LOS_S_est_fba_SS_MA_vit(:,:,ii,snr)));
+%             
+%             % Delays retrieved here allow transmitted signal
+%             % reconstruction for different SNRs
+%             delay_S_fba_SS_est_vit(ii,snr) = LOS_delays(indx_S_est_SPS_FBA_vit); 
+%         end
+%     end
+% 
+% %     delay_S__fba_SS_est = roundn(delay_S_est/Ts, -1)*Ts;
+%     
+%     % Calculate RMSE inner argument
+%     argMin_S_fba_SS_est_vit = repmat(signal_tx_delay', 1, length(SNR));
+%     for snr = 1:length(SNR);
+%         for ii = 1:satAmount;
+%             rmseArg_S_est_fba_SS_vit(:,:,ii,snr,idrmse) = (real(delay_S_fba_SS_est_vit) - argMin_S_fba_SS_est_vit).^2;
+%         end
+%     end
 end
 % Loop END
 
@@ -1251,7 +1011,7 @@ for ii = 1:satAmount;
         end
     end
 end
-RMSE_S_est_5 = sqrt(RMSE_S_est_5/iterationsRMSE);
+RMSE_S_est_5 = sqrt(RMSE_S_est_5/(iterationsRMSE));
 % ----------------------------------------------------------------------------------------------------------------------
 % Multiple Antennas Delay RMSE calculation 5 ANTENAS - Known Steering
 % Matrix
@@ -1267,16 +1027,16 @@ end
 RMSE_S_Known_5 = sqrt(RMSE_S_Known_5/iterationsRMSE);
 % ----------------------------------------------------------------------------------------------------------------------
 % Multiple Antennas Delay RMSE calculation 5 ANTENAS VIT
-RMSE_S_est_vit_5 = zeros(satAmount,length(SNR));
-for ii = 1:satAmount;
-    for snr = 1:length(SNR);
-        for idrmse = 1:iterationsRMSE;
-            argTemp_S_est_vit_5 = rmseArg_S_est_vit_5(:,:,ii,snr,idrmse);
-            RMSE_S_est_vit_5 = RMSE_S_est_vit_5 + argTemp_S_est_vit_5;
-        end
-    end
-end
-RMSE_S_est_vit_5 = sqrt(RMSE_S_est_vit_5/iterationsRMSE);
+% RMSE_S_est_vit_5 = zeros(satAmount,length(SNR));
+% for ii = 1:satAmount;
+%     for snr = 1:length(SNR);
+%         for idrmse = 1:iterationsRMSE;
+%             argTemp_S_est_vit_5 = rmseArg_S_est_vit_5(:,:,ii,snr,idrmse);
+%             RMSE_S_est_vit_5 = RMSE_S_est_vit_5 + argTemp_S_est_vit_5;
+%         end
+%     end
+% end
+% RMSE_S_est_vit_5 = sqrt(RMSE_S_est_vit_5/iterationsRMSE);
 % ----------------------------------------------------------------------------------------------------------------------
 % Multiple Antennas Delay RMSE calculation 5 ANTENAS CONC
 RMSE_S_est_conc_5 = zeros(satAmount,length(SNR));
@@ -1401,16 +1161,16 @@ end
 RMSE_S_est_fba_SS_16 = sqrt(RMSE_S_est_fba_SS_16/iterationsRMSE);
 % ----------------------------------------------------------------------------------------------------------------------
 % Multiple Antennas Delay RMSE calculation with FBA and SPS 16 antenas vit
-RMSE_S_est_fba_SS_vit = zeros(satAmount,length(SNR));
-for ii = 1:satAmount;
-    for snr = 1:length(SNR);
-        for idrmse = 1:iterationsRMSE;
-            argTemp_S_est_fba_SS_vit = rmseArg_S_est_fba_SS_vit(:,:,ii,snr,idrmse);
-            RMSE_S_est_fba_SS_vit = RMSE_S_est_fba_SS_vit + argTemp_S_est_fba_SS_vit;
-        end
-    end
-end
-RMSE_S_est_fba_SS_vit = sqrt(RMSE_S_est_fba_SS_vit/iterationsRMSE);
+% RMSE_S_est_fba_SS_vit = zeros(satAmount,length(SNR));
+% for ii = 1:satAmount;
+%     for snr = 1:length(SNR);
+%         for idrmse = 1:iterationsRMSE;
+%             argTemp_S_est_fba_SS_vit = rmseArg_S_est_fba_SS_vit(:,:,ii,snr,idrmse);
+%             RMSE_S_est_fba_SS_vit = RMSE_S_est_fba_SS_vit + argTemp_S_est_fba_SS_vit;
+%         end
+%     end
+% end
+% RMSE_S_est_fba_SS_vit = sqrt(RMSE_S_est_fba_SS_vit/iterationsRMSE);
 
 %% DOA RMSE
 RMSE_DOA = sqrt(sum(rmse_DOA_est_1,3)/iterationsRMSE);
@@ -1427,7 +1187,7 @@ RMSE_DOA_MA_conc_16 = sqrt(sum(rmse_DOA_MA_est_conc_16,3)/iterationsRMSE);
 RMSE_DOA_MA_fba_16 = sqrt(sum(rmse_DOA_MA_fba_16,3)/iterationsRMSE);
 RMSE_DOA_MA_SS_16 = sqrt(sum(rmse_DOA_MA_SS_16,3)/iterationsRMSE);
 RMSE_DOA_MA_FBA_SS_16 = sqrt(sum(rmse_DOA_MA_fba_SS_est_16,3)/iterationsRMSE);
-RMSE_DOA_MA_FBA_SS_VIT = sqrt(sum(rmse_DOA_MA_fba_SS_est_vit,3)/iterationsRMSE);
+% RMSE_DOA_MA_FBA_SS_VIT = sqrt(sum(rmse_DOA_MA_fba_SS_est_vit,3)/iterationsRMSE);
 
 %% DELAY ALL PLOTS
 %Set plot style
@@ -1507,13 +1267,13 @@ legend('Single antenna',...
 [num2str(M1) ' ULA - SPS'],...
 [num2str(M1) ' ULA - FBA'],...
 [num2str(M1) ' ULA - CONC'],...
-[num2str(M1) ' ULA - FBA+SPS+CONC'],...
+[num2str(M1) ' ULA - FBA+SPS'],...
 [num2str(M2) ' ULA'],...
 [num2str(M2) ' ULA - A Known'],...
 [num2str(M2) ' ULA - SPS'],...
 [num2str(M2) ' ULA - FBA'],...
 [num2str(M2) ' ULA - CONC'],...
-[num2str(M2) ' ULA - FBA+SPS+CONC']);
+[num2str(M2) ' ULA - FBA+SPS']);
 %         [num2str(M1) ' ULA com VIT'],...
 %% DOA ALL PLOTS
 figure;
@@ -1579,12 +1339,12 @@ legend('Single antenna',...
 [num2str(M1) ' ULA - SPS'],...
 [num2str(M1) ' ULA - FBA'],...
 [num2str(M1) ' ULA - CONC'],...
-[num2str(M1) ' ULA - FBA+SPS+CONC'],...
+[num2str(M1) ' ULA - FBA+SPS'],...
 [num2str(M2) ' ULA'],...
 [num2str(M2) ' ULA - SPS'],...
 [num2str(M2) ' ULA - FBA'],...
 [num2str(M2) ' ULA - CONC'],...
-[num2str(M2) ' ULA - FBA+SPS+CONC']);
+[num2str(M2) ' ULA - FBA+SPS']);
 % 
 % %% RMSE PLOT 5 Antenas
 % figure;
