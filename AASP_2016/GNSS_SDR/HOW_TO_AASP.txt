@@ -1,0 +1,21 @@
+
+Original Code: "A software-defined GPS and Galileo Receiver"
+
+Modifications: Alexandre Serio Buscher - 	Instituto Militar de Engenharia
+				  		Fraunhofer EMS - TU Ilmenau
+	Sep 2016
+
+
+1) Run "init.m" at the first folder
+	you will be prompted at in the Command Window
+
+2) the "setSettings" function is with the older layout but inside it there are
+	new informations, press Ctrl+C to stop program and make changes if you
+	wish.
+	>> If you data source isn't the defaults, make sure that the new file
+		location is loaded at settings struct
+
+3) at "Choose data" if you select 2, is possible the use a default 5 satellites 
+	matrix. To use it press "Ctrl+C" to exit program and the SAT matrix will
+	appear in the workspace. Restart the program again and insert SAT when
+	prompted;
