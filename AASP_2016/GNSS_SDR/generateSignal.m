@@ -10,13 +10,13 @@ fprintf(['\n\n             SDR GNSS\n',...
 
 %% Ask inputs =============================================================
 %PRN Inputs
-fprintf(['\t\tINPUTS\n\n',...
-        '- Remember that only 8 channel are allowed by now\n',...
-        '- Enter a matrix where each row represents ONE satellite\n',...
+fprintf(['\tINPUTS\n\n',...
+        '\t- Remember that only 8 channel are allowed by now\n',...
+        '\t- Enter a matrix where each row represents ONE satellite\n',...
         'columns:  PRN       DoA      CodePhase      DopplerError\n',...
         '        (1 - 32)  (0º-90º) (1 - 1023chips) (-10k ~ +10k)Hz'])
-
-    satList = input('\nMatrix = \n');
+    
+satList = input('\nMatrix = \n');
 % creating struct with satellites informations
 satellites = [];
 [d,~] = size(satList);
@@ -26,10 +26,8 @@ for ii = 1:d
     satellites(ii).CodPhase = satList(ii,3);
     satellites(ii).DoppErr = satList(ii,4);
 end
-fprintf('\n');
 showSatStatus(satellites);
-fprintf('\n Processing data: . . .\n');
-
+fprintf(' Processing data: . . .\n');
 
 %% Generation of satellite signals ========================================
 % Preallocation of satSignal array
@@ -38,7 +36,7 @@ samplesPerCode = round(settings.samplingFreq / ...
 satSignal = (samplesPerCode);
 % call genSatSignal for each satellit
 for ii = 1:d
-    satSignal = genSatSignal(satellite(ii), settings, satSignal,...
+    satSignal = genSatSignal(satellites(ii), settings, satSignal,...
          samplesPerCode);
 end
 %% Gereneration of receiver signal ========================================

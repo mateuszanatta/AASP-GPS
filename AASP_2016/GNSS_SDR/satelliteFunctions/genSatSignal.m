@@ -7,14 +7,14 @@ function [signal] = genSatSignal(currSat, settings, sig, samplesPerCode)
 %           samplesPerCode - length of arrays to be created
 % OUTPUTS:  signal      - increase the sig for satSignal array 
 
-% Generation of CA lookup table ===========================================
+%% Generation of CA lookup table ===========================================
 caCode = generateCA(currSat.PRN);
-% Generation of unused Navigation lookup table ============================
-navCode = ones(1500);
-% clocks initial settings =================================================
+%% Generation of unused Navigation lookup table ============================
+navCode = ones(2,1500);
+%% clocks initial settings =================================================
 clk10_23 = 0;
 clk1_023 = 0;
-% counters offset settings ================================================
+%% counters offset settings ================================================
 contCA = [currSat.CodPhase:1023,1:(currSat.CodPhase-1)];
 
 if (currSat.CodPhase > 50) % offset for Navigational Period Counter
@@ -26,17 +26,17 @@ else ij = currSat.CodPhase;
 end %if(countNavPer > 50)
 contNavPer = ij;
 contNavMess = ii;
-%Doppler Rate Deviation Allocation for VCOs ===============================
+%% Doppler Rate Deviation Allocation for VCOs ===============================
 
-% VCOs carriers Generation ================================================
+%% VCOs carriers Generation ================================================
 
 currFreqL1 = settings.satL1freq+currSat.DoppErr;
 %currFreqL2 = settings.satL2freq+currSat.DoppErr;
-tt = (0:1/currFreqL1:0.005); %generates 5 ms of signal
+tt = (0:1/settings.samplingFreq:0.1); %generates 100 ms of signal
 final = length(tt);
 CosL1Carr = cos(2*pi*currFreqL1*tt);
 SinL1Carr = sin(2*pi*currFreqL1*tt);
-currSig = zeros(final);
+currSig = 0*SinL1Carr;
 
 %% Signal Formation, as GNSS book Appendix B ==============================
 for now = 1:final

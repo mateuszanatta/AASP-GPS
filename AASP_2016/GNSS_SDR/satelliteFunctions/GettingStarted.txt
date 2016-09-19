@@ -1,7 +1,0 @@
-
-Author: Alexandre Serio Buscher - Instituto Militar de Engenharia
-				  Fraunhofer EMS - TU Ilmenau
-	Sep 2016
-
-
-1) Run generateSignal.m
