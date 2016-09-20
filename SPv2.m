@@ -411,22 +411,22 @@ for idrmse = 1:iterationsRMSE;
         % Generate Signal Matrix - Moore-Penrose Pseudo Inverse
         
         % 5 FBA SPS CONC
-        S_est_fba_SS_5 = pinv(A_est_fba_SS_5)*X_conc_4;
+        S_est_fba_SS_4 = estimate_signal_matrix(A_est_fba_SS_5, X_conc_4);
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 FBA
-        S_est_fba_5 = pinv(A_est_fba_5)*X_4;
+        S_est_fba_4 = estimate_signal_matrix(A_est_fba_5, X_4);
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 SPS
-        S_est_SS_5 = pinv(A_est_SS_5)*X_4;
+        S_est_SS_5 = estimate_signal_matrix(A_est_SS_5, X_4);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 FBA SPS CONC
-        S_est_fba_SS_16 = pinv(A_est_fba_SS_16)*X_conc_16;
+        S_est_fba_SS_16 = estimate_signal_matrix(A_est_fba_SS_16, X_conc_16);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 FBA
-        S_est_fba_16 = pinv(A_est_fba_16)*X_16;
+        S_est_fba_16 = estimate_signal_matrix(A_est_fba_16, X_16);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 SS
-        S_est_SS_16 = pinv(A_est_SS_16)*X_16;
+        S_est_SS_16 = estimate_signal_matrix(A_est_SS_16, X_16);
                
     %% Lowest Correlation Estimation Noise Free Environment
 
@@ -550,7 +550,7 @@ for idrmse = 1:iterationsRMSE;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 ANTENAS FBA SPS CONC
         % Correlation between Estimated signal and PR signals delayed
-        S_calc_fba_SS_5 = transpose(S_est_fba_SS_5);
+        S_calc_fba_SS_5 = transpose(S_est_fba_SS_4);
         
         [deviance_LOS_est_fba_SS_MA_5, ~] = deviance_estimator(satAmount, S_calc_fba_SS_5, ...
                                          signal_shiftedPR2, phi_fba_SS_est_5, corr_matched_bank2, 1);
@@ -559,7 +559,7 @@ for idrmse = 1:iterationsRMSE;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 ANTENAS FBA
         % Correlation between Estimated signal and PR signals delayed
-        S_calc_fba_5 = transpose(S_est_fba_5);
+        S_calc_fba_5 = transpose(S_est_fba_4);
                 
         [deviance_LOS_est_fba_MA_5, ~] = deviance_estimator(satAmount, S_calc_fba_5, ...
                                          signal_shiftedPR, phi_fba_5, corr_matched_bank, 1);
