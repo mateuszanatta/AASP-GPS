@@ -16,13 +16,9 @@ function [mReceivedSignal] = generate_received_signal(pSignal, pNumAntennas, pSi
 %%
     % Generate received signal for an unique antenna 
     if(nargin < 2)
-        if(pNumAntennas == 1)
-            %When using an unique antenna model the signal is transmitted
-            %through an additive channel
-            mReceivedSignal = sum(pSignal,2); 
-        else
-            disp('The number of antennas has to be greater than zero');
-        end
+        %When using an unique antenna model the signal is transmitted
+        %through an additive channel
+        mReceivedSignal = sum(pSignal,2); 
     else
         if(pNumAntennas >= 2)
 
