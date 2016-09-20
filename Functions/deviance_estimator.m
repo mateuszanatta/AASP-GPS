@@ -82,7 +82,7 @@ function [mDeviance, mPhase] = deviance_estimator(pSatAmount, pSignal, ...
         %find the lowest value
         minDeviance = sum(sqrt(imag(mEstimated_Deviance_LOS(:, :, sat)).^2));
         %get the index of the lowest value
-        [~, minDeviance_Index] = min(minDeviance);
+        [~, minDeviance_Index] = min(abs(minDeviance));
         
         %store the estimated deviance to each satellite
         mDeviance(:, :, sat) = mEstimated_Deviance_LOS(:, minDeviance_Index, sat);
