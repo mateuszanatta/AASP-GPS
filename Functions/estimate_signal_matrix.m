@@ -8,14 +8,14 @@ function [mEstimatedSignal] = estimate_signal_matrix(pSteeringMatrix, pMixingMat
 %                     steering matrix or the steering matrix used to create
 %                     the antenna array.
 %
-%   - pSignal         - The received signal by the antenna
+%   - pMixingMatrix  - The mixing matrix containing the signal and noise
 %% Output
 %   - mEstimatedSignal - The received estimate received signal. This one is
 %                      obtained by multiplying the pseudo-inverse of the 
-%                      Steering Matrix by the received signal
+%                      Steering Matrix by the mixing matrix.
 
     if(nargin >= 2)
-        mEstimatedSignal = pinv(pSteeringMatrix)*pSignal;
-    else
+        mEstimatedSignal = pinv(pSteeringMatrix)*pMixingMatrix;
+    end
 end
 
