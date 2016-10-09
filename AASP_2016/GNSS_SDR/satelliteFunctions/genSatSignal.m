@@ -18,8 +18,6 @@ contCA1_023MHz = currSat.CodPhase; % C/A Code Clock Counter: 1 inc = 10 ContP10_
 contNAV50Hz = 1; % NavCode Clock: 1 inc = 10230 ContP10_23Mhz
 contNAV1500 = 1; % NavMessage Counter
 
-numMS = 2; %index 2 for ms of signal
-nyquistGap = 4; % index 4 for Nyquist gap, more samples because of Doppler Error;
 time = (0:1/(settings.samplingFreq*totalPoints*nyquistGap*numMS):numMS);                             
 final = length(1,time);
 %% counters offset settings ===============================================
