@@ -34,7 +34,7 @@ lambda = 3e8/B;
 delta = lambda/2;
 
 % oversampling factor pulse (sampling precision of pulse relative to bandwidth)
-rho_pulse=1000.0;
+rho_pulse=100.0;
 
 %% C/D parameters 
 
@@ -56,7 +56,7 @@ SNR = -30:2:-20;
 shifted_delays_PR = (-0.5:0.25:0.5)*Ts;
 
 % Set of different delays used for differente Line Of Sight (LOS) possible Signals - These delays are used to compare signals and filter the transmitted ones 
-LOS_delays = (-1:0.01:1)*Ts;
+LOS_delays = (-1:0.1:1)*Ts;
 
 % Pulse delay used for the Transmitted Signal - Most relevant transmission parameter
 % delaySet = (1+1)*rand(1,satAmount) - 1;
@@ -118,35 +118,34 @@ for ii = 1:satAmount;
     argumentTx2(:,ii) = gen_signal2(tau+signal_tx_delay(ii),id(:,ii),pulse,Lc,Ti,Nc)*signalPhases(ii);
 end
 
+%% One Antenna Scheme
 % For an unique antenna model signals will be transmitted through an additive channel
-signal_tx = sum(argumentTx,2);
+% signal_tx = sum(argumentTx,2);
+signal_tx = generate_received_signal(argumentTx);
 
 % Concatenation For an unique antenna model signals will be transmitted through an additive channel
 signal_tx_concat = sum(argumentTx2,2);
 
+
+
+%% Multiple Antennas Scheme
 % Multiple Antennas Signal Model (d x S, matrix)
 signal_tx_MA = argumentTx;
 
 % Multiple Antennas Signal Model (d x S, matrix)
 signal_tx_MA_concat = argumentTx2;
-
-%% Multiple Antennas Scheme
 % Amount of Antennas in the array
 M1 = 4;
 M2 = 16;
-
-% Generate Antena Array model - Steering Matrix
-% A1 = array_matr_Rd(phaseTx, M1, 1);
+% Generate steering matrix
 A1 = generate_steering_matrix(phaseTx, M1);
-% A2 = array_matr_Rd(phaseTx, M2, 1);
 A2 = generate_steering_matrix(phaseTx, M2);
 
-% Receveid Signal with multiple antennas - Noise still to be added
-X0_1 = A1*transpose(signal_tx_MA);
-X0_2 = A2*transpose(signal_tx_MA);
-X0_conc = A2*transpose(signal_tx_MA_concat);
-X0_conc_5 = A1*transpose(signal_tx_MA_concat);
-
+%Generate the received signals to a multiple antenna array
+X0_1 = generate_received_signal(signal_tx_MA, M1, phaseTx);
+X0_2 = generate_received_signal(signal_tx_MA, M2, phaseTx);
+X0_conc_5 = generate_received_signal(signal_tx_MA_concat, M1, phaseTx);
+X0_conc = generate_received_signal(signal_tx_MA_concat, M2, phaseTx);
 
 %% RMSE
 iterationsRMSE = 1; % Amount of Iterations for RMSE calculation (Root Mean Square Error - determines algorithm performance throughout executions)
@@ -155,9 +154,6 @@ for idrmse = 1:iterationsRMSE;
     idrmse
     for idxSNR = 1:length(SNR);
         %% AWGN transmission
-
-        % White Noise standard deviation - SNR calculation
-        %sigma = 10^(-SNR(idxSNR)/20)/sqrt(2);
 
         % Draw ZMCSCG (zero mean) WHITE noise with variance sigma^2
         whiteNoise = generateWhiteNoise(size(signal_tx), SNR(idxSNR));
@@ -181,43 +177,39 @@ for idrmse = 1:iterationsRMSE;
         whiteNoise_conc_5 =generateWhiteNoise(size(X0_conc_5), SNR(idxSNR));
         
         % Received Signal Multiple Antennas
-        % 5
-        X_5 = X0_1 + whiteNoise_M1;
+        % 4 antennas
+        X_4 = X0_1 + whiteNoise_M1;
         % ----------------------------------------------------------------------------------------------------------------------
-        % 5 CONC
-        X_conc_5 = X0_conc_5 + whiteNoise_conc_5;
+        % 4 antennas CONC
+        X_conc_4 = X0_conc_5 + whiteNoise_conc_5;
         % ----------------------------------------------------------------------------------------------------------------------
-        % 16
+        % 16 antennas
         X_16 = X0_2 + whiteNoise_M2;
         % ----------------------------------------------------------------------------------------------------------------------
-        % 16 CONC
+        % 16 antennas CONC
         X_conc_16 = X0_conc + whiteNoise_conc;
                 
         % Estimating the noisy subspace - Signal Processing through SVD
-        % 5
-%         Us_5 = est_sigsubsp_classic(X_5,satAmount);
-        Us_5 = estimate_signal_subspace(X_5, satAmount);
+        % 4 antennas
+        Us_5 = estimate_signal_subspace(X_4, satAmount);
         % ----------------------------------------------------------------------------------------------------------------------
-        % 5 CONC
-%         Us_conc_5 = est_sigsubsp_classic(X_conc_5,satAmount);
-        Us_conc_5 = estimate_signal_subspace(X_conc_5, satAmount);
+        % 4 antennas CONC
+        Us_conc_5 = estimate_signal_subspace(X_conc_4, satAmount);
         % ----------------------------------------------------------------------------------------------------------------------
-        % 16
-%         Us_16 = est_sigsubsp_classic(X_16,satAmount);
+        % 16 antennas
         Us_16 = estimate_signal_subspace(X_16, satAmount);
         % ----------------------------------------------------------------------------------------------------------------------
-        % 16 CONC
-%         Us_conc_16 = est_sigsubsp_classic(X_conc_16,satAmount);
+        % 16 antennas CONC
         Us_conc_16 = estimate_signal_subspace(X_conc_16, satAmount);
        
         %% Estimate DoA
         % DOA (Direction of Arrival) Estimation
-        % 5
-        phase_est_5 = ESPRIT(Us_5);%standard_esprit_Rd(Us_5,M1);
+        % 4 antennas
+        phase_est_4 = ESPRIT(Us_5);%standard_esprit_Rd(Us_5,M1);
 %         phase_est_5 = sort(phase_est_5,'descend');
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 conc
-        phase_est_conc_5 = ESPRIT(Us_conc_5);%standard_esprit_Rd(Us_conc_5,M1);
+        phase_est_conc_4 = ESPRIT(Us_conc_5);%standard_esprit_Rd(Us_conc_5,M1);
 %         phase_est_conc_5 = sort(phase_est_conc_5,'descend');
         % ----------------------------------------------------------------------------------------------------------------------
         % 16
@@ -230,8 +222,8 @@ for idrmse = 1:iterationsRMSE;
         
         % Estimated DOAS for multiple antennas with different SNRs
         % ----------------------------------------------------------------------------------------------------------------------
-        phase_MA_est_5(idxSNR, :) = phase_est_5;
-        phase_MA_est_conc_5(idxSNR, :) = phase_est_conc_5;
+        phase_MA_est_4(idxSNR, :) = phase_est_4;
+        phase_MA_est_conc_4(idxSNR, :) = phase_est_conc_4;
         
         % ----------------------------------------------------------------------------------------------------------------------
         phase_MA_est_16(idxSNR, :) = phase_est_16;
@@ -240,9 +232,9 @@ for idrmse = 1:iterationsRMSE;
         % Once the phi_est is computed we can generate back the matriz A
        % ----------------------------------------------------------------------------------------------------------------------
 %         A_est_5 = array_matr_Rd(phase_est_5,M1);
-        A_est_5 = generate_steering_matrix(phase_est_5, M1);
+        A_est_4 = generate_steering_matrix(phase_est_4, M1);
 %         A_est_conc_5 = array_matr_Rd(phase_est_conc_5,M1);
-        A_est_conc_5 = generate_steering_matrix(phase_est_conc_5, M1);
+        A_est_conc_4 = generate_steering_matrix(phase_est_conc_4, M1);
         
         % ----------------------------------------------------------------------------------------------------------------------
 %         A_est_16 = array_matr_Rd(phase_est_16,M2);
@@ -253,22 +245,22 @@ for idrmse = 1:iterationsRMSE;
         
         % Generate Signal Matrix - Moore-Penrose Pseudo Inverse
         % ----------------------------------------------------------------------------------------------------------------------
-        S_est_5 = pinv(A_est_5)*X_5;
+        S_est_4 = estimate_signal_matrix(A_est_4, X_4);
         
         %Generate 4 antenna Signal Matrix with the already known Steering
         %Matrix
-        S_5 = pinv(A1)*X_5;
-         
-        S_est_conc_5 = pinv(A_est_conc_5)*X_conc_5;
+        S_4 = estimate_signal_matrix(A1, X_4);
+        
+        S_est_conc_4 = estimate_signal_matrix(A_est_conc_4, X_conc_4);
         
         % ----------------------------------------------------------------------------------------------------------------------
-        S_est_16 = pinv(A_est_16)*X_16;
+        S_est_16 = estimate_signal_matrix(A_est_16, X_16);
         
         %Generate 16 antenna Signal Matrix with the already known Steering
         %Matrix
-        S_16 = pinv(A2)*X_16;
+        S_16 = estimate_signal_matrix(A2, X_16);
         
-        S_est_conc_16 = pinv(A_est_conc_16)*X_conc_16;
+        S_est_conc_16 = estimate_signal_matrix(A_est_conc_16, X_conc_16);
 
         %% SPS/FBA Design
         
@@ -279,7 +271,7 @@ for idrmse = 1:iterationsRMSE;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 FBA
 %         X_fba_5 = dofba_tensor(X_5);
-        X_fba_5 = FBA(X_5);
+        X_fba_5 = FBA(X_4);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 SPS + FBA
 %         X_fba = dofba_tensor(X_conc_16);
@@ -300,7 +292,7 @@ for idrmse = 1:iterationsRMSE;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 SPS
 %         X_SS_5 = spatialsmooth_meastensor(X_5,L1);
-        X_SS_5 = SPS(X_5);
+        X_SS_5 = SPS(X_4);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 SPS + FBA
 %         X_fba_SS_16 = spatialsmooth_meastensor(X_fba_16,L2);
@@ -389,7 +381,7 @@ for idrmse = 1:iterationsRMSE;
         phase_MA_SS_16(idxSNR,:) = phi_SS_16;
         
         %% Matrix A
-        % Once the phi_est is computed we can generate back the matriz A
+        % Once the phi_est is computed we can generate back the matrix A
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 FBA SPS CONC
 %         A_est_fba_SS_5 = array_matr_Rd(phi_fba_SS_est_5,M1);
@@ -419,22 +411,22 @@ for idrmse = 1:iterationsRMSE;
         % Generate Signal Matrix - Moore-Penrose Pseudo Inverse
         
         % 5 FBA SPS CONC
-        S_est_fba_SS_5 = pinv(A_est_fba_SS_5)*X_conc_5;
+        S_est_fba_SS_4 = estimate_signal_matrix(A_est_fba_SS_5, X_conc_4);
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 FBA
-        S_est_fba_5 = pinv(A_est_fba_5)*X_5;
+        S_est_fba_4 = estimate_signal_matrix(A_est_fba_5, X_4);
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 SPS
-        S_est_SS_5 = pinv(A_est_SS_5)*X_5;
+        S_est_SS_5 = estimate_signal_matrix(A_est_SS_5, X_4);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 FBA SPS CONC
-        S_est_fba_SS_16 = pinv(A_est_fba_SS_16)*X_conc_16;
+        S_est_fba_SS_16 = estimate_signal_matrix(A_est_fba_SS_16, X_conc_16);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 FBA
-        S_est_fba_16 = pinv(A_est_fba_16)*X_16;
+        S_est_fba_16 = estimate_signal_matrix(A_est_fba_16, X_16);
         % ----------------------------------------------------------------------------------------------------------------------
         % 16 SS
-        S_est_SS_16 = pinv(A_est_SS_16)*X_16;
+        S_est_SS_16 = estimate_signal_matrix(A_est_SS_16, X_16);
                
     %% Lowest Correlation Estimation Noise Free Environment
 
@@ -506,28 +498,28 @@ for idrmse = 1:iterationsRMSE;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 ANTENAS
         % Correlation between Estimated signal and PR signals delayed   
-        S_calc_1 = transpose(S_est_5);
+        S_calc_1 = transpose(S_est_4);
        
         [deviance_LOS_est_MA_5, ~] = deviance_estimator(satAmount, S_calc_1, ...
-                                         signal_shiftedPR, phase_est_5, corr_matched_bank, 1);
+                                         signal_shiftedPR, phase_est_4, corr_matched_bank, 1);
         
         deviance_LOS_S_est_MA_5(:,:,:,idxSNR) = deviance_LOS_est_MA_5;
         
         % 5 ANTENAS - Known Steering Matrix
         % Correlation between Estimated signal and PR signals delayed Using the already Knwon Steering Matrix   
-        S_Known = transpose(S_5);
+        S_Known = transpose(S_4);
 
         [deviance_LOS_Known_est_MA_5, ~] = deviance_estimator(satAmount, S_Known, ...
-                                         signal_shiftedPR, phase_est_5, corr_matched_bank, 1);
+                                         signal_shiftedPR, phase_est_4, corr_matched_bank, 1);
         
         deviance_LOS_S_Known_MA_5(:,:,:,idxSNR) = deviance_LOS_Known_est_MA_5;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 ANTENAS CONC
         % Correlation between Estimated signal and PR signals delayed   
-        S_calc_conc_5 = transpose(S_est_conc_5);
+        S_calc_conc_5 = transpose(S_est_conc_4);
         
         [deviance_LOS_est_MA_conc_5, ~] = deviance_estimator(satAmount, S_calc_conc_5, ...
-                                         signal_shiftedPR2, phase_est_conc_5, corr_matched_bank2, 1);
+                                         signal_shiftedPR2, phase_est_conc_4, corr_matched_bank2, 1);
         
         deviance_LOS_S_est_MA_conc_5(:,:,:,idxSNR) = deviance_LOS_est_MA_conc_5;
         % ----------------------------------------------------------------------------------------------------------------------
@@ -558,7 +550,7 @@ for idrmse = 1:iterationsRMSE;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 ANTENAS FBA SPS CONC
         % Correlation between Estimated signal and PR signals delayed
-        S_calc_fba_SS_5 = transpose(S_est_fba_SS_5);
+        S_calc_fba_SS_5 = transpose(S_est_fba_SS_4);
         
         [deviance_LOS_est_fba_SS_MA_5, ~] = deviance_estimator(satAmount, S_calc_fba_SS_5, ...
                                          signal_shiftedPR2, phi_fba_SS_est_5, corr_matched_bank2, 1);
@@ -567,7 +559,7 @@ for idrmse = 1:iterationsRMSE;
         % ----------------------------------------------------------------------------------------------------------------------
         % 5 ANTENAS FBA
         % Correlation between Estimated signal and PR signals delayed
-        S_calc_fba_5 = transpose(S_est_fba_5);
+        S_calc_fba_5 = transpose(S_est_fba_4);
                 
         [deviance_LOS_est_fba_MA_5, ~] = deviance_estimator(satAmount, S_calc_fba_5, ...
                                          signal_shiftedPR, phi_fba_5, corr_matched_bank, 1);
@@ -621,10 +613,10 @@ for idrmse = 1:iterationsRMSE;
     rmse_DOA_est_1_conc(:,:,idrmse) =  (phaseTx_est_conc - rmse_temp_phase).^2;
     
     % Root Mean Square Error for Multiple Antenna Model
-    rmse_DOA_MA_est_5(:,:,idrmse) =  (phase_MA_est_5 - rmse_temp_phase).^2;
+    rmse_DOA_MA_est_5(:,:,idrmse) =  (phase_MA_est_4 - rmse_temp_phase).^2;
     rmse_DOA_MA_est_fba_5(:,:,idrmse) =  (phase_MA_fba_5 - rmse_temp_phase).^2;
     rmse_DOA_MA_est_SS_5(:,:,idrmse) =  (phase_MA_SS_5 - rmse_temp_phase).^2;
-    rmse_DOA_MA_est_conc_5(:,:,idrmse) =  (phase_MA_est_conc_5 - rmse_temp_phase).^2;
+    rmse_DOA_MA_est_conc_5(:,:,idrmse) =  (phase_MA_est_conc_4 - rmse_temp_phase).^2;
     rmse_DOA_MA_fba_SS_est_5(:,:,idrmse) =  (phase_MA_fba_SS_est_5 - rmse_temp_phase).^2;
     
     rmse_DOA_MA_est_16(:,:,idrmse) =  (phase_MA_est_16 - rmse_temp_phase).^2;
@@ -639,16 +631,7 @@ for idrmse = 1:iterationsRMSE;
     %% Delay Estimation No Scheme per SNR
 
     % Find indexes of pulse delay to estimate signals with different SNRs
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_est] = min(real(deviance_LOS_est_rx(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_est(ii,snr) = LOS_delays(indx_est); 
-        end
-    end
-    
+    delay_est = delay_estimation(deviance_LOS_est_rx, LOS_delays, SNR, satAmount);
 %     delay_est = roundn(delay_est/Ts,-1)*Ts;
     
     % Calculate RMSE inner argument
@@ -661,15 +644,7 @@ for idrmse = 1:iterationsRMSE;
     
 % Find indexes of pulse delay to estimate signals with different SNRs -
 % CONC
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_est_conc] = min(real(deviance_LOS_est_rx_conc(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_est_conc(ii,snr) = LOS_delays(indx_est_conc); 
-        end
-    end
+    delay_est_conc = delay_estimation(deviance_LOS_est_rx_conc, LOS_delays, SNR, satAmount);
     
         % Calculate RMSE inner argument - CONC
     argMin_conc = repmat(signal_tx_delay', 1, length(SNR));
@@ -683,16 +658,7 @@ for idrmse = 1:iterationsRMSE;
     % ----------------------------------------------------------------------------------------------------------------------
     % 5 ANTENAS
     % Find delays for Multiple Antenna Schemes
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_5] = min(real(deviance_LOS_S_est_MA_5(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_est_5(ii,snr) = LOS_delays(indx_S_est_5); 
-        end
-    end
-
+    delay_S_est_5 = delay_estimation(deviance_LOS_S_est_MA_5, LOS_delays, SNR, satAmount);
     
     % Calculate RMSE inner argument
     argMin_S_est_5 = repmat(signal_tx_delay', 1, length(SNR));
@@ -705,16 +671,7 @@ for idrmse = 1:iterationsRMSE;
     % ----------------------------------------------------------------------------------------------------------------------
     % 5 ANTENAS - Known Steering Matrix
     % Find delays for Multiple Antenna Schemes
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_Known_5] = min(real(deviance_LOS_S_Known_MA_5(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_Known_5(ii,snr) = LOS_delays(indx_S_Known_5); 
-        end
-    end
-
+    delay_S_Known_5 = delay_estimation(deviance_LOS_S_Known_MA_5, LOS_delays, SNR, satAmount);
     
     % Calculate RMSE inner argument
     argMin_S_Known_5 = repmat(signal_tx_delay', 1, length(SNR));
@@ -723,42 +680,11 @@ for idrmse = 1:iterationsRMSE;
             rmseArg_S_Known_5(:,:,ii,snr,idrmse) = (real(delay_S_Known_5) - argMin_S_Known_5).^2;
         end
     end
-    
-    % ----------------------------------------------------------------------------------------------------------------------
-    % 5 ANTENAS VIT
-    % Find delays for Multiple Antenna Schemes
-%     for snr = 1:length(SNR);
-%         for ii = 1:satAmount;
-%             [~, indx_S_est_vit_5] = min(real(deviance_LOS_S_est_MA_vit_5(:,:,ii,snr)));
-%             
-%             % Delays retrieved here allow transmitted signal
-%             % reconstruction for different SNRs
-%             delay_S_est_vit_5(ii,snr) = LOS_delays(indx_S_est_vit_5); 
-%         end
-%     end
-% 
-%     
-%     % Calculate RMSE inner argument
-%     argMin_S_est_vit_5 = repmat(signal_tx_delay', 1, length(SNR));
-%     for snr = 1:length(SNR);
-%         for ii = 1:satAmount;
-%             rmseArg_S_est_vit_5(:,:,ii,snr,idrmse) = (real(delay_S_est_vit_5) - argMin_S_est_vit_5).^2;
-%         end
-%     end
-    
+        
     % ----------------------------------------------------------------------------------------------------------------------
     % 5 ANTENAS CONC
     % Find delays for Multiple Antenna Schemes
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_conc_5] = min(real(deviance_LOS_S_est_MA_conc_5(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_est_conc_5(ii,snr) = LOS_delays(indx_S_est_conc_5); 
-        end
-    end
-
+    delay_S_est_conc_5 = delay_estimation(deviance_LOS_S_est_MA_conc_5, LOS_delays, SNR, satAmount);
     
     % Calculate RMSE inner argument
     argMin_S_est_conc_5 = repmat(signal_tx_delay', 1, length(SNR));
@@ -770,15 +696,7 @@ for idrmse = 1:iterationsRMSE;
     % ----------------------------------------------------------------------------------------------------------------------
     % 16 ANTENAS
     % Find delays for Multiple Antenna Schemes
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_16] = min(real(deviance_LOS_S_est_MA_16(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_est_16(ii,snr) = LOS_delays(indx_S_est_16); 
-        end
-    end
+    delay_S_est_16 = delay_estimation(deviance_LOS_S_est_MA_16, LOS_delays, SNR, satAmount);
     
     
     % Calculate RMSE inner argument
@@ -791,15 +709,7 @@ for idrmse = 1:iterationsRMSE;
     % ----------------------------------------------------------------------------------------------------------------------
     % 16 ANTENAS - Known Steering Matrix
     % Find delays for Multiple Antenna Schemes
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_Known_16] = min(real(deviance_LOS_S_Known_MA_16(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_Known_16(ii,snr) = LOS_delays(indx_S_Known_16); 
-        end
-    end
+    delay_S_Known_16 = delay_estimation(deviance_LOS_S_Known_MA_16, LOS_delays, SNR, satAmount);
     
     
     % Calculate RMSE inner argument
@@ -813,15 +723,7 @@ for idrmse = 1:iterationsRMSE;
     % ----------------------------------------------------------------------------------------------------------------------
     % 16 ANTENAS CONC
     % Find delays for Multiple Antenna Schemes
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_conc] = min(real(deviance_LOS_S_est_MA_conc(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_est_conc(ii,snr) = LOS_delays(indx_S_est_conc); 
-        end
-    end
+    delay_S_est_conc = delay_estimation(deviance_LOS_S_est_MA_conc, LOS_delays, SNR, satAmount);
 
     
     % Calculate RMSE inner argument
@@ -835,15 +737,7 @@ for idrmse = 1:iterationsRMSE;
     %% Delay Estimation Multiple Antennas FBA + SS
     % ----------------------------------------------------------------------------------------------------------------------
     % 5 ANTENAS FBA + SS + CONC
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_1_5] = min(real(deviance_LOS_S_est_fba_SS_MA_5(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_fba_SS_est_5(ii,snr) = LOS_delays(indx_S_est_1_5); 
-        end
-    end
+    delay_S_fba_SS_est_5 = delay_estimation(deviance_LOS_S_est_fba_SS_MA_5, LOS_delays, SNR, satAmount);
     
     % Calculate RMSE inner argument
     argMin_S_fba_SS_est_5 = repmat(signal_tx_delay', 1, length(SNR));
@@ -854,15 +748,7 @@ for idrmse = 1:iterationsRMSE;
     end
     % ----------------------------------------------------------------------------------------------------------------------
     % 5 Antenna Schemes FBA
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_fba_5] = min(real(deviance_LOS_S_est_fba_MA_5(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_fba_est_5(ii,snr) = LOS_delays(indx_S_est_fba_5); 
-        end
-    end
+    delay_S_fba_est_5 = delay_estimation(deviance_LOS_S_est_fba_MA_5, LOS_delays, SNR, satAmount);
     
     % Calculate RMSE inner argument
     argMin_S_fba_est_5 = repmat(signal_tx_delay', 1, length(SNR));
@@ -874,15 +760,7 @@ for idrmse = 1:iterationsRMSE;
     
      % ----------------------------------------------------------------------------------------------------------------------
     % 5 Antenna Schemes SPS
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_SS_5] = min(real(deviance_LOS_S_est_SS_MA_5(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_SS_est_5(ii,snr) = LOS_delays(indx_S_est_SS_5); 
-        end
-    end
+    delay_S_SS_est_5 = delay_estimation(deviance_LOS_S_est_SS_MA_5, LOS_delays, SNR, satAmount);
     
     % Calculate RMSE inner argument
     argMin_S_SS_est_5 = repmat(signal_tx_delay', 1, length(SNR));
@@ -893,15 +771,7 @@ for idrmse = 1:iterationsRMSE;
     end
     % ----------------------------------------------------------------------------------------------------------------------
     %  16 FBA + SS + CONC
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_SPS_FBA_16] = min(real(deviance_LOS_S_est_fba_SS_MA_16(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_fba_SS_est_16(ii,snr) = LOS_delays(indx_S_est_SPS_FBA_16); 
-        end
-    end
+    delay_S_fba_SS_est_16 = delay_estimation(deviance_LOS_S_est_fba_SS_MA_16, LOS_delays, SNR, satAmount);
     
     % Calculate RMSE inner argument
     argMin_S_fba_SS_est_16 = repmat(signal_tx_delay', 1, length(SNR));
@@ -913,15 +783,7 @@ for idrmse = 1:iterationsRMSE;
     
     % ----------------------------------------------------------------------------------------------------------------------
     %  16 FBA
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_fba_16] = min(real(deviance_LOS_S_est_fba_MA_16(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_fba_est_16(ii,snr) = LOS_delays(indx_S_est_fba_16); 
-        end
-    end
+    delay_S_fba_est_16 = delay_estimation(deviance_LOS_S_est_fba_MA_16, LOS_delays, SNR, satAmount);
     
     % Calculate RMSE inner argument
     argMin_S_fba_est_16 = repmat(signal_tx_delay', 1, length(SNR));
@@ -932,15 +794,7 @@ for idrmse = 1:iterationsRMSE;
     end
     % ----------------------------------------------------------------------------------------------------------------------
     %  16 SPS
-    for snr = 1:length(SNR);
-        for ii = 1:satAmount;
-            [~, indx_S_est_SS_16] = min(real(deviance_LOS_S_est_SS_MA_16(:,:,ii,snr)));
-            
-            % Delays retrieved here allow transmitted signal
-            % reconstruction for different SNRs
-            delay_S_SS_est_16(ii,snr) = LOS_delays(indx_S_est_SS_16); 
-        end
-    end
+    delay_S_SS_est_16 = delay_estimation(deviance_LOS_S_est_SS_MA_16, LOS_delays, SNR, satAmount);
     
     % Calculate RMSE inner argument
     argMin_S_SS_est_16 = repmat(signal_tx_delay', 1, length(SNR));
@@ -950,28 +804,6 @@ for idrmse = 1:iterationsRMSE;
         end
     end
     
-    % ----------------------------------------------------------------------------------------------------------------------
-    % 16 antenas VIT
-    % Find delays for Multiple Antenna Schemes FBA + SS
-%     for snr = 1:length(SNR);
-%         for ii = 1:satAmount;
-%             [~, indx_S_est_SPS_FBA_vit] = min(real(deviance_LOS_S_est_fba_SS_MA_vit(:,:,ii,snr)));
-%             
-%             % Delays retrieved here allow transmitted signal
-%             % reconstruction for different SNRs
-%             delay_S_fba_SS_est_vit(ii,snr) = LOS_delays(indx_S_est_SPS_FBA_vit); 
-%         end
-%     end
-% 
-% %     delay_S__fba_SS_est = roundn(delay_S_est/Ts, -1)*Ts;
-%     
-%     % Calculate RMSE inner argument
-%     argMin_S_fba_SS_est_vit = repmat(signal_tx_delay', 1, length(SNR));
-%     for snr = 1:length(SNR);
-%         for ii = 1:satAmount;
-%             rmseArg_S_est_fba_SS_vit(:,:,ii,snr,idrmse) = (real(delay_S_fba_SS_est_vit) - argMin_S_fba_SS_est_vit).^2;
-%         end
-%     end
 end
 % Loop END
 
