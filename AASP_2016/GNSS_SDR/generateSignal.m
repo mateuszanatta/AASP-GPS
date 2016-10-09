@@ -30,7 +30,7 @@ for ii = 1:d
     satellites(ii).SIR = satList(ii,7);
 end
 showSatStatus(satellites);
-fprintf(' Processing data: . . .\n');
+fprintf(' Processing Signal Generation: . . .\n');
 
 %% Generation of CA look-up table =========================================
 satCAtable = genSatCAtable(satellites);
@@ -46,13 +46,23 @@ satPtable = genSatPtable(); %not generated
 samplesPerCode = round(settings.samplingFreq*settings.nrMSgen*...
     settings.nyquistGapgen/(settings.codeFreqBasis / settings.codeLength));
 satSignal = zeros(d,samplesPerCode);
+
+startTime = now;
+    disp (['   Generation started at ', datestr(startTime)]);
+
 % call genSatSignal to perform the signal composition
 for ii = 1:d
+    fprintf('Sat %2d ', ii)
     satSignal(ii,:) = genSatSignal(satellites(ii), settings, samplesPerCode,...
         satCAtable(ii,:), satNAVtable(ii,:), satPtable);
+    fprintf(' done;\n')
 end % for ii = 1:d
 
+disp(['   Generation is over (elapsed time ', ...
+                                        datestr(now - startTime, 13), ')'])
+
 %% Generation of noise for each satellite =================================
+
 
 %% Generation of multipath components =====================================
 
