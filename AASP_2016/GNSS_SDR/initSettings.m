@@ -74,7 +74,11 @@ settings.samplingFreq       = 38.192e6;     %[Hz]
 settings.codeFreqBasis      = 1.023e6;      %[Hz]
 %}
 % Define number of chips in a code period
-settings.codeLength         = 1023;
+settings.codeLength      = 1023;
+% Define number of ms of signal to be generated
+settings.nrMSgen         = 2;   % Be carefull to not overload MATLAB memory
+% Define number of extra points per normal sampling
+settings.nyquistGapgen   = 4;   % due to Nyquist and Doppler effects
 
 %% Constants ==============================================================
 
