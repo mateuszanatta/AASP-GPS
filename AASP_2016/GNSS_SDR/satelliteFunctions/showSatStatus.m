@@ -8,20 +8,23 @@ function showSatStatus( sats )
 %                   at the processing of the signal (tracking part).
 %       settings    - receiver settings
 
-fprintf('\n*=====*=====*==========*============*==============*\n');
-fprintf(  '|     | PRN |    DoA   | Code Phase | Doppler Error|\n');
-fprintf(  '*=====*=====*==========*============*==============*\n');
+fprintf('\n   *===*=======*===========*===========*=========*======*=======*\n');
+fprintf(  ' / |PRN|  DoA  |Code Phase | Dopp. Err.|   SNR   |M.Path|  SIR  |\n');
+fprintf(  '*==*===*=======*===========*===========*=========*======*=======*\n');
 
 for satNr = 1 : length(sats)
-    fprintf('| %2d  | %3d |  %2.2fº  | %4d chips |    %5d Hz  |\n', ...
+    fprintf('|%2d| %2d| %3.2fº| %4d chips|  %5d Hz | %2.2fdB|  %2d  | %2.2fdB|\n', ...
                 satNr, ...
                 sats(satNr).PRN, ...
                 sats(satNr).DoA, ...
                 sats(satNr).CodPhase, ...
-                sats(satNr).DoppErr);
+                sats(satNr).DoppErr,...
+                sats(satNr).SNR,...
+                sats(satNr).Mpath,...
+                sats(satNr).SIR);
 end
 
-fprintf('*=====*=====*==========*============*==============*\n\n');
+fprintf('*==*===*=======*===========*===========*=========*======*=======*\n\n');
 
 end
 

@@ -13,63 +13,49 @@ fprintf(['\n\n             SDR GNSS\n',...
 fprintf(['\tINPUTS\n\n',...
         '\t- Remember that only 8 channel are allowed by now\n',...
         '\t- Enter a matrix where each row represents ONE satellite\n',...
-        'columns:  PRN       DoA      CodePhase      DopplerError\n',...
-        '        (1 - 32)  (0º-90º) (1 - 1023chips) (-10k ~ +10k)Hz'])
+        'columns:  PRN     DoA      CodePhase     DopplerError    SNR    M.Path    SIR\n',...
+        '        (1 - 32)(0º-90º)(1 - 1023chips)(-10k ~ +10k)Hz (~-20dB)(l=1-LOS)(~-20dB)' ])
     
-satList = input('\nMatrix = \n');
+satList = input('\nSatellite Matrix = \n');
 % creating struct with satellites informations
-satellites = [];
 [d,~] = size(satList);
+satellites = struct([]);
 for ii = 1:d
     satellites(ii).PRN = satList(ii,1);
     satellites(ii).DoA = satList(ii,2);
     satellites(ii).CodPhase = satList(ii,3);
     satellites(ii).DoppErr = satList(ii,4);
+    satellites(ii).SNR = satList(ii,5);
+    satellites(ii).Mpath = satList(ii,6);
+    satellites(ii).SIR = satList(ii,7);
 end
 showSatStatus(satellites);
 fprintf(' Processing data: . . .\n');
 
+%% Generation of CA look-up table =========================================
+satCAtable = genSatCAtable(satellites);
+
+%% Generation of Navigation lookup table ==================================
+satNAVtable = genSatNAVtable(satellites);
+
+%% Generation of P_yCode - simulated as Appendix B ========================
+satPtable = genSatPtable(); %not generated
+
 %% Generation of satellite signals ========================================
 % Preallocation of satSignal array
-samplesPerCode = round(settings.samplingFreq / ...
-                           (settings.codeFreqBasis / settings.codeLength));
-satSignal = (samplesPerCode);
-% call genSatSignal for each satellit
+samplesPerCode = round(settings.samplingFreq*settings.nrMSgen*...
+    settings.nyquistGapgen/(settings.codeFreqBasis / settings.codeLength));
+satSignal = zeros(d,samplesPerCode);
+% call genSatSignal to perform the signal composition
 for ii = 1:d
-    satSignal = genSatSignal(satellites(ii), settings, satSignal,...
-         samplesPerCode);
-end
+    satSignal(ii,:) = genSatSignal(satellites(ii), settings, samplesPerCode,...
+        satCAtable(ii,:), satNAVtable(ii,:), satPtable);
+end % for ii = 1:d
+
+%% Generation of noise for each satellite =================================
+
+%% Generation of multipath components =====================================
+
 %% Gereneration of receiver signal ========================================
-% call genRcvSignal to add all signals and noise and save in approp. file
+% call genRcvSignal to add all signals and save in approp. file
 
-
-%% Generation 10 Navigation Tables as data for Simulink ===================
-% Don't have preambles or valid navigations bits yet
-NAVtable1 = ones(2,1500);
-xor = 1;
-for jj = 1:1500
-    xor = xor*(-1);
-    NAVtable1(2,:) = xor;
-end
-
-NAVtable2 = ones(2,1500);
-xor = -1;
-for jj = 1:1500
-    xor = xor*(-1);
-    NAVtable2(2,:) = xor;
-end
-
-NAVtable3 = ones(2,1500);
-xor = 1;
-mor = -1;
-for jj = 1:1500
-    if(iseven(jj))
-        xor = xor*(-1);
-        NAVtable3(2,:) = xor;
-    else
-        mor = mor*(-1);
-        NAVtable3(2,:) = mor;
-    end
-end
-
-%% Setup of the desired satellites =======================================================
