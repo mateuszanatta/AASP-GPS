@@ -47,6 +47,7 @@ for now = 1:length(time)
             db2mag(-3); %normal attenuation block
         if (sample < points)
             sample = sample+1;
+        else fprintf(':')
         end %if(sample < points)
         if (~mod(sample,points/10)) % Ellapsed time marker
             fprintf('.')

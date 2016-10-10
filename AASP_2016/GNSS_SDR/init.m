@@ -67,21 +67,34 @@ end
 %% Generate plot of raw data and ask if ready to start processing =========
 
 fprintf('\nChoose data:\n\t')
-prompt = ('1 = Already Set/Default Real Data;  2 = Generate Data\n');
+prompt = ('1 = Dfalt Real Data;  2 = Generate Data;  3 = Saved Gen Data;\n');
 choose = 0;
-while(choose ~= 1 && choose ~= 2)
+while(choose ~= 1 && choose ~= 2 && choose ~=3)
     choose = input(prompt);
     if(choose == 2)
         addpath satelliteFunctions  % Signal generation functions
         load SAT.mat                % if you already have a ready SAT matrx
-        generateSignal
+        skip = 0;
+        generateSignal;
         settings.fileName = ...
    '..\SatteliteSignals\SatelliteSignals.bin';
     end %end choose==2
+    if(choose == 3)
+        addpath satelliteFunctions  % Signal generation functions
+        load SAT.mat                % if you already have a ready SAT matrx
+        skip = 1;
+        generateSignal
+        settings.fileName = ...
+   '..\SatteliteSignals\SatelliteSignals.bin';
+        skip = 1;
+    end %end choose==3
+    if(choose ~= 1 && choose ~= 2 && choose ~=3) % for chooses out of range
+        fprintf('\nBad choice\n')
+    end %if(choose ~= 1 && choose ~= 2 && choose ~=3)
 end %end while choose
 try
     fprintf('Probing data (%s)...\n', settings.fileName)
-    probeData(settings);
+    probeData(settings,choose);
 catch
     % There was an error, print it and exit
     errStruct = lasterror;

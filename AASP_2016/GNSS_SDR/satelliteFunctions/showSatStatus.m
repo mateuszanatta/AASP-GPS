@@ -1,12 +1,7 @@
 function showSatStatus( sats )
 %Prints the status of all used Satellites in a table.
 %
-%showChannelStatus(channel)
-%
-%   Inputs:
-%       channel     - data for each channel. It is used to initialize and
-%                   at the processing of the signal (tracking part).
-%       settings    - receiver settings
+
 
 fprintf('\n   *===*=======*===========*===========*=========*======*=======*\n');
 fprintf(  ' / |PRN|  DoA  |Code Phase | Dopp. Err.|   SNR   |M.Path|  SIR  |\n');
