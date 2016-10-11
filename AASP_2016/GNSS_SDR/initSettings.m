@@ -56,7 +56,7 @@ settings.skipNumberOfBytes     = 0;
 % the post-processing mode
 settings.fileName           = ...
    '..\GNSS_signal_records\GPSdata-DiscreteComponents-fs38_192-if9_55.bin';
-%  '..\SatteliteSignals\SatelliteSignals.mat';    <<<<<<<<<<<<<<<<<<<<<<<<
+settings.path = '..\SatelliteSignals';
 % Data type used to store one sample
 settings.dataType           = 'int8';   
 % Data type used to store one sample

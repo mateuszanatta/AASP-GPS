@@ -21,72 +21,92 @@ contNAV = 1; % NavMessage Counter
 %% Carriers generation ====================================================
 % Frequency off-set
 freq = (set.satL1freq + currSat.DoppErr);
-tt = 0:1:(points-1);
-tt = tt/(set.nyquistGapgen*set.samplingFreq);
-sample = 1;
-%CosL1Carr = zeros(1,points);
-%SinL1Carr = zeros(1,points);
-%CosL1Carr = cos(2*pi*freq*tt/(set.nyquistGapgen*set.samplingFreq));
-%SinL1Carr = sin(2*pi*freq*tt/(set.nyquistGapgen*set.samplingFreq));
+carrSin = zeros(1,points);
+carrCos = zeros(1,points);
+time = 0:1/(set.nyquistGapgen*freq):...
+    (0.001*set.nrMSgen-1/(set.nyquistGapgen*freq));
 
-% Doppler shift rate
+samptime = 0:1:(points-1);
+samptime = samptime/(set.nyquistGapgen*set.samplingFreq); %sampling points of generation
+sample = 1;
+
+%% Doppler shift rate
 %by now no rate, just difference
 
 %% Signal Formation, as GNSS book Appendix B ==============================
-fprintf('. ')
-signal = zeros(1,points);
-time = 0:1/(freq*set.nyquistGapgen):(0.001*set.nrMSgen);
-for now = 1:length(time)
-    % signal itself trough look-up tables
-    if( time(now) >= tt(sample) ) % add um && (sample <= points)
+fprintf('. |')
+ref = 154*set.nyquistGapgen; %Pcode basis = 154 clocks of carrier
+TIME = length(time);
+marker200us = fix(TIME*0.025);
+marker1ms = fix(TIME*0.1);
+for now = 1:TIME
+    % BPSK itself trough look-up tables
+    if( time(now) >= samptime(sample) ) % comparision of generation time with sampling time
         % cossine signal formation
-        signal(sample) = CAtable(contCA)*NAVtable(contNAV)*cos(2*pi*freq*tt(sample));
+        carrCos(sample) = CAtable(contCA)*NAVtable(contNAV);
         % sine signal formation
-        signal(sample) = signal(sample) + ...
-            ( Ptable(contP)*NAVtable(contNAV)*sin(2*pi*freq*tt(sample)) )*...
-            db2mag(-3); %normal attenuation block
-        if (sample < points)
-            sample = sample+1;
-        else fprintf(':')
+        carrSin(sample) = Ptable(contP)*NAVtable(contNAV);
+                             % increase sample marker; in the last passage...
+        if (sample < points) 
+            sample = sample+1; %... it extrapolates index, so I ignored...
+        else
+            fprintf('|')
+            break;
         end %if(sample < points)
-        if (~mod(sample,points/10)) % Ellapsed time marker
-            fprintf('.')
-        end %(~mod(sample,points/20)) % Ellapsed time marker
         
+        %if (~mod(sample,marker200us)) %Ellapsed time marker = "200us"
+        %    fprintf('.')
+        %end %if(~mod(sample,points/(5*set.nrMSgen)))
+     
     end %if( ~mod(now/tt(now)) )
     
-    %look-up tables update
-    if(~mod(now,154)) 
-        
-        if (contP == 10230)
-            contP = 1;
+    %look-up tables update; all is done by the falling-edge
+    if(~mod(now,ref)) % 154 is the number of cicles of P code
+       
+        if (contP < 10230)
+            contP = contP + 1;
             
-            if(clockNAV50 == 50)
-                clockNAV50 = 1;
+            if(clockNAV50 < 50)
+                clockNAV50 = clockNAV50 + 1;
                 
-                if(contNAV == 1500)
+                if(contNAV < 1500)
+                    contNAV = contNAV + 1;
+                else
                     contNAV = 1;
-                else contNAV = contNAV+1;
-                end % if(contNAV > 1499)
+                end % if(contNAV < 1500)
             
-            else clockNAV50 = clockNAV50+1;
-            end %if(clockNAV50 == 50)
-        else contP = contP+1;
+            else
+                clockNAV50 = 1;
+            end %if(clockNAV50 < 50)
+        else
+            contP = 1;
+   
         end %(contP == 10230)
         
-        if(~mod(now,1540))
-            if (contCA == 1023)
+        if(~mod(now,ref*10)) %CA count runs 10 times slower then Pcode
+            if (contCA < 1023)
+                contCA = contCA + 1;
+            else
                 contCA = 1;
-            else contCA = contCA+1;
-            end %(contCA == 1023)
-        end %if(~mod(now,1540))
+                fprintf('§')      % markes each complete CA with "§"
+            end %(contCA < 1023)     
+        end %if(~mod(now,ref*10)
         
-        
-    end %if(~mod(now,154))
- 
+    end %if(~mod(now,ref))
+    
+    if(~mod(now,marker1ms))
+            fprintf('|')
+    end
+    if(~mod(now,marker200us))
+        fprintf('.')
+    end
+    
 end % for now = 1:length(time)
-fprintf(' . ')
-%% Attenuation - desired SNR ==============================================
-signal = signal*db2mag(currSat.SNR);
+
+%carriers addition
+signal = carrCos.*cos(2*pi*freq*samptime);
+signal = signal + ...
+    carrSin.*sin(2*pi*freq*samptime)*db2mag(-3); %normal attenuation block
+fprintf(' .')
 
 end % end function

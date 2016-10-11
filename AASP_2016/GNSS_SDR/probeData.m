@@ -1,4 +1,4 @@
-function probeData(varargin)
+function probeData(settings)
 %Function plots raw data information: time domain plot, a frequency domain
 %plot and a histogram. 
 %
@@ -41,28 +41,25 @@ function probeData(varargin)
 % $Id: probeData.m,v 1.1.2.7 2006/08/22 13:46:00 dpl Exp $
 
 %% Check the number of arguments ==========================================
-if (nargin == 2)
-    [settings, choose] = deal(varargin{1:2});
-    fileNameStr = settings.fileName;
+%if (nargin == 2)
+%    [settings, choose] = deal(varargin{1:2});
+    fileNameStr = cat(2,settings.path,settings.fileName);
     if ~ischar(fileNameStr)
         error('File name must be a string');
     end
-elseif (nargin == 3)
-   [fileNameStr, settings, choose] = deal(varargin{1:3});
-   if ~ischar(fileNameStr)
-       error('File name must be a string');
-   end
-else
-    error('Incorect number of arguments');
-end
+%elseif (nargin == 3)
+%   [fileNameStr, settings, choose] = deal(varargin{1:3});
+%   if ~ischar(fileNameStr)
+%       error('File name must be a string');
+%   end
+%else
+    %error('Incorect number of arguments');
+%end
     
 %% Generate plot of raw data ==============================================
-%added
-if (choose == 1)
-%added
 [fid, message] = fopen(fileNameStr, 'rb');
 
-    if (fid > 0)
+if (fid > 0)
         % Move the starting point of processing. Can be used to start the
         % signal processing at any point in the data record (e.g. for long
         % records).
@@ -122,57 +119,4 @@ if (choose == 1)
     else
         %=== Error while opening the data file ================================
         error('Unable to read file %s: %s.', fileNameStr, message);
-    end % if (fid > 0)
-
-else
-    % Find number of samples per spreading code
-    samplesPerCode = round(settings.samplingFreq / ...
-                           (settings.codeFreqBasis / settings.codeLength));
-    % Move the starting point of processing.                   
-    load rcvSignal.mat;
-    try
-        data = rcvSignal(settings.skipNumberOfBytes+1:...
-            10*samplesPerCode+settings.skipNumberOfBytes);
-    catch
-        % The file is to short
-        error('Could not read enough data from the data file.');
-    end % end try
-    %--- Initialization ---------------------------------------------------
-        figure(100);
-        clf(100);
-    
-        timeScale = 0 : 1/settings.samplingFreq : 5e-3;    
-    
-        %--- Time domain plot -------------------------------------------------
-        subplot(2, 2, 1);
-        plot(1000 * timeScale(1:round(samplesPerCode/50)), ...
-             data(1:round(samplesPerCode/50)));
-     
-        axis tight;
-        grid on;
-        title ('Time domain plot');
-        xlabel('Time (ms)'); ylabel('Amplitude');
-    
-        %--- Frequency domain plot --------------------------------------------
-        subplot(2,2,2);
-        pwelch(data-mean(data), 16384, 1024, 2048, settings.samplingFreq/1e6)
-    
-        axis tight;
-        grid on;
-        title ('Frequency domain plot');
-        xlabel('Frequency (MHz)'); ylabel('Magnitude');
-    
-        %--- Histogram --------------------------------------------------------
-        subplot(2, 2, 3.5);
-        hist(data, -128:128)
-    
-        dmax = max(abs(data)) + 1;
-        axis tight;
-        adata = axis;
-        axis([-dmax dmax adata(3) adata(4)]);
-        grid on;
-        title ('Histogram'); 
-        xlabel('Bin'); ylabel('Number in bin');
-%added
-end %if (choose == 1)
-%added
+end % if (fid > 0)

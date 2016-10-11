@@ -18,11 +18,12 @@ function [] = genRcvSignal( signal, sats , set, skip)
     
 if(~skip)    
     
-    fileNameStr = set.fileName;
+    fileNameStr = cat(2,set.path,set.fileName);
     fid = fopen(fileNameStr,'w');
     fwrite(fid,rcvSignal);
     fclose(fid);
+    save(cat(2,set.path,'rcvSignal.mat'),'rcvSignal');
 else
-    save('rcvSignal.mat','rcvSignal');
+    %save('rcvSignal.mat','rcvSignal');
 end %function [] = genRcvSignal( signal, sats , set)
 

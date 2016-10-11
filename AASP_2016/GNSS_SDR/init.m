@@ -65,33 +65,44 @@ if(choose == 1)
 end
 
 %% Generate plot of raw data and ask if ready to start processing =========
-
-fprintf('\nChoose data:\n\t')
-prompt = ('1 = Dfalt Real Data;  2 = Generate Data;  3 = Saved Gen Data;\n');
 choose = 0;
-while(choose ~= 1 && choose ~= 2 && choose ~=3)
-    choose = input(prompt);
-    if(choose == 2)
-        addpath satelliteFunctions  % Signal generation functions
-        load SAT.mat                % if you already have a ready SAT matrx
-        skip = 0;
-        generateSignal;
-        settings.fileName = ...
-   '..\SatteliteSignals\SatelliteSignals.bin';
-    end %end choose==2
-    if(choose == 3)
-        addpath satelliteFunctions  % Signal generation functions
-        load SAT.mat                % if you already have a ready SAT matrx
-        skip = 1;
-        generateSignal
-        settings.fileName = ...
-   '..\SatteliteSignals\SatelliteSignals.bin';
-        skip = 1;
-    end %end choose==3
-    if(choose ~= 1 && choose ~= 2 && choose ~=3) % for chooses out of range
-        fprintf('\nBad choice\n')
-    end %if(choose ~= 1 && choose ~= 2 && choose ~=3)
-end %end while choose
+while (choose == 0 || choose > 3)
+fprintf('\nChoose data:\n\t')
+prompt = (['1 = Dfalt Real Data;  2 = Saved Receiver Data;  ',...
+    '3 = Generate Data;\n']);
+choose = input(prompt);
+    switch(choose)
+        case 1      
+        case 2 % use generated data
+            [settings.fileName,settings.path] = uigetfile('*.bin',...
+                'Select the Receiver Data .bin file',...
+                ['D:\ALEXANDRE\Vida_Militar_novo\',...
+                '2016_IME\Intercambio_Exterior_novo\',...
+                'Projetos_Instituto_Fraunhofer_novo\',...
+                'Proj_GNSS_AntArray_JoaoPaulo\MatLab_AASP_2016\',...
+                'AASP_2016\SatelliteSignals']);
+            addpath('satelliteFunctions',settings.path)  % Signal generation functions
+            load savedSAT.mat           % SAT matrix of this saved signal
+            %load savedSatSignal.mat
+            skip = 1; %Skip generation
+            generateSignal
+        case 3 %generate Data
+            settings.path = uigetdir(['D:\ALEXANDRE\Vida_Militar_novo\',...
+                '2016_IME\Intercambio_Exterior_novo\',...
+                'Projetos_Instituto_Fraunhofer_novo\',...
+                'Proj_GNSS_AntArray_JoaoPaulo\MatLab_AASP_2016\',...
+                'AASP_2016\SatelliteSignals'],...
+                'Select Directory to Save Generated Signal');
+            addpath('satelliteFunctions',settings.path)  % Signal generation functions
+            settings.fileName = input(...
+                'Enter the Receiver Data file saving name','s');
+            load SAT.mat                % if you already have a ready SAT matrx
+            skip = 0; %Don't skip generation
+            generateSignal
+        otherwise 
+            fprintf('\nBad choice\n');
+    end %end while choose
+end
 try
     fprintf('Probing data (%s)...\n', settings.fileName)
     probeData(settings,choose);
