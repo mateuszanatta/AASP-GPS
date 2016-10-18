@@ -43,7 +43,7 @@ function probeData(settings)
 %% Check the number of arguments ==========================================
 %if (nargin == 2)
 %    [settings, choose] = deal(varargin{1:2});
-    fileNameStr = cat(2,settings.path,settings.fileName);
+    fileNameStr = cat(2,settings.path,'\',settings.fileName,'.bin');
     if ~ischar(fileNameStr)
         error('File name must be a string');
     end

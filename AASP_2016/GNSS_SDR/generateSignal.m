@@ -33,7 +33,9 @@ for ii = 1:d
     satellites(ii).Mpath = satList(ii,6);
     satellites(ii).SIR = satList(ii,7);
 end %for ii = 1:d
-
+if(~skip)
+    save(cat(2,settings.path,'\savedSAT.mat'),'SAT');
+end
 showSatStatus(satellites);
 totalTime = now;
     disp (['-> Signal Generator started at ', datestr(totalTime)]);
@@ -73,7 +75,7 @@ startTime = now;
             satCAtable(ii,:), satNAVtable(ii,:), satPtable);
         fprintf(' done;\n')
     end % for ii = 1:d
-    save(cat(2,settings.path,'satSignal.mat'),'satSignal');
+    save(cat(2,settings.path,'\satSignal.mat'),'satSignal');
     disp(['        Generation is over (elapsed time ', ...
                                         datestr(now - startTime, 13), ')'])
     fprintf('\t-Satellite signals  . . . . . . . . created;\n');
@@ -99,8 +101,13 @@ end
 if(~skip)
     genRcvSignal(satSignal, satellites, settings, skip);
     fprintf('\t-Receiver signal  . . . . . . . . . created;\n');
+    %memory cleaning
+    clear d; clear ii; clear samplesPerCode; clear satCAtable;
+    clear satNAVtable; clear satPtable; %clear satSignal;
+    
     disp(['-> Signal Generator is over (elapsed time ', ...
                                         datestr(now - totalTime, 13), ')'])
+    clear startTime; clear totalTime;
     fprintf('\n\n');
 else
     fprintf('-> Receiver signal  . . . . . . . . . loaded;\n');

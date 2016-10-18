@@ -56,8 +56,8 @@
 
 %% Initialization =========================================================
 disp ('Starting processing...');
-
-[fid, message] = fopen(settings.fileName, 'rb');
+fileNameStr = cat(2,settings.path,'\',settings.fileName,'.bin');
+[fid, message] = fopen(fileNameStr, 'rb');
 
 %If success, then process the data
 if (fid > 0)

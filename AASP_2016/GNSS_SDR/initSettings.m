@@ -55,7 +55,8 @@ settings.skipNumberOfBytes     = 0;
 % This is a "default" name of the data file (signal record) to be used in
 % the post-processing mode
 settings.fileName           = ...
-   '..\GNSS_signal_records\GPSdata-DiscreteComponents-fs38_192-if9_55.bin';
+   '..\GNSS_signal_records\GPSdata-DiscreteComponents-fs38_192-if9_55';
+%  '..\GNSS_signal_records\GPSdata-DiscreteComponents-fs38_192-if9_55.bin';
 settings.path = '..\SatelliteSignals';
 % Data type used to store one sample
 settings.dataType           = 'int8';   
@@ -76,7 +77,7 @@ settings.codeFreqBasis      = 1.023e6;      %[Hz]
 % Define number of ms of signal to be generated
 settings.nrMSgen         = 10;   % Be carefull to not overload MATLAB memory
 % Define number of extra points per normal sampling
-settings.nyquistGapgen   = 4;   % due to Nyquist and Doppler effects
+settings.nyquistGapgen   = 1;%4;   % due to Nyquist and Doppler effects
 % Define number of chips in a code period
 settings.codeLength      = 1023;
 

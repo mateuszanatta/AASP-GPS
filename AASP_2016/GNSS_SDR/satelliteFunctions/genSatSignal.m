@@ -20,7 +20,9 @@ contNAV = 1; % NavMessage Counter
 
 %% Carriers generation ====================================================
 % Frequency off-set
-freq = (set.satL1freq + currSat.DoppErr);
+freq = set.satL1freq;
+%freq = (set.satL1freq + currSat.DoppErr);
+%freq = (set.IF + currSat.DoppErr);
 carrSin = zeros(1,points);
 carrCos = zeros(1,points);
 time = 0:1/(set.nyquistGapgen*freq):...
@@ -94,16 +96,17 @@ for now = 1:TIME
         
     end %if(~mod(now,ref))
     
-    if(~mod(now,marker1ms))
-            fprintf('|')
-    end
+    
     if(~mod(now,marker200us))
         fprintf('.')
     end
-    
+    if(~mod(now,marker1ms))
+        fprintf('|')
+    end
 end % for now = 1:length(time)
 
 %carriers addition
+
 signal = carrCos.*cos(2*pi*freq*samptime);
 signal = signal + ...
     carrSin.*sin(2*pi*freq*samptime)*db2mag(-3); %normal attenuation block

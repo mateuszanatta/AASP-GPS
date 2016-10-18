@@ -66,7 +66,7 @@ end
 
 %% Generate plot of raw data and ask if ready to start processing =========
 choose = 0;
-while (choose == 0 || choose > 3)
+while (choose ~= 1 && choose ~=2 && choose ~= 3)
 fprintf('\nChoose data:\n\t')
 prompt = (['1 = Dfalt Real Data;  2 = Saved Receiver Data;  ',...
     '3 = Generate Data;\n']);
@@ -95,7 +95,7 @@ choose = input(prompt);
                 'Select Directory to Save Generated Signal');
             addpath('satelliteFunctions',settings.path)  % Signal generation functions
             settings.fileName = input(...
-                'Enter the Receiver Data file saving name','s');
+                'Enter the Receiver Data file saving name:\n','s');
             load SAT.mat                % if you already have a ready SAT matrx
             skip = 0; %Don't skip generation
             generateSignal
@@ -103,9 +103,10 @@ choose = input(prompt);
             fprintf('\nBad choice\n');
     end %end while choose
 end
+fprintf('\n')
 try
-    fprintf('Probing data (%s)...\n', settings.fileName)
-    probeData(settings,choose);
+    fprintf('Probing data (%s)...\n',settings.fileName)
+    probeData(settings);
 catch
     % There was an error, print it and exit
     errStruct = lasterror;
