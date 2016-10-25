@@ -51,7 +51,7 @@ settings.numberOfChannels   = 8;
 % based only. 
 settings.skipNumberOfBytes     = 0;
 
-%% Raw signal file name and other parameter ===============================
+%% Raw signal file name and other parameters ==============================
 % This is a "default" name of the data file (signal record) to be used in
 % the post-processing mode
 settings.fileName           = ...
@@ -64,6 +64,7 @@ settings.dataType           = 'int8';
 % Intermediate, sampling and code frequencies
 settings.IF             = 9.548e6;      %[Hz]
 settings.samplingFreq   = 38.192e6;     %[Hz]
+settings.BW             = 200e6;         %[Hz] - 3dB point, centered in L1
 settings.codeFreqBasis  = 1.023e6;      %[Hz]
 settings.satFo          = 10*settings.codeFreqBasis; %[Hz]
 settings.satL1freq      = 154*settings.satFo; %[Hz]
@@ -77,7 +78,7 @@ settings.codeFreqBasis      = 1.023e6;      %[Hz]
 % Define number of ms of signal to be generated
 settings.nrMSgen         = 10;   % Be carefull to not overload MATLAB memory
 % Define number of extra points per normal sampling
-settings.nyquistGapgen   = 1;%4;   % due to Nyquist and Doppler effects
+settings.nyquistGapgen   = 84;%4;   % due to Nyquist and Doppler effects
 % Define number of chips in a code period
 settings.codeLength      = 1023;
 

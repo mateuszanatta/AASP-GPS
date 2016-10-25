@@ -99,7 +99,7 @@ end
 %% Gereneration of receiver signal ========================================
 % call genRcvSignal to add all signals and save in approp. file
 if(~skip)
-    genRcvSignal(satSignal, satellites, settings, skip);
+    genRcvSignal(satSignal, satellites, settings);
     fprintf('\t-Receiver signal  . . . . . . . . . created;\n');
     %memory cleaning
     clear d; clear ii; clear samplesPerCode; clear satCAtable;
