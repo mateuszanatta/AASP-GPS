@@ -153,8 +153,14 @@ for PRN = settings.acqSatelliteList
     %--- Correct C/A code phase exclude range if the range includes array
     %boundaries
     if excludeRangeIndex1 < 2
-        codePhaseRange = excludeRangeIndex2 : ...
+       %orginal book's code BUG; add this
+        if (excludeRangeIndex1 == 1 || excludeRangeIndex1 == 0)
+            codePhaseRange = excludeRangeIndex2 : ...
+                         (samplesPerCode - excludeRangeIndex1);
+       else 
+           codePhaseRange = excludeRangeIndex2 : ...
                          (samplesPerCode + excludeRangeIndex1);
+        end
                          
     elseif excludeRangeIndex2 >= samplesPerCode
         codePhaseRange = (excludeRangeIndex2 - samplesPerCode) : ...
@@ -183,7 +189,7 @@ for PRN = settings.acqSatelliteList
         
         codeValueIndex = floor((ts * (1:10*samplesPerCode)) / ...
                                (1/settings.codeFreqBasis));
-                           
+                            
         longCaCode = caCode((rem(codeValueIndex, 1023) + 1));
     
         %--- Remove C/A code modulation from the original signal ----------

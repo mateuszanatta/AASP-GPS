@@ -56,7 +56,11 @@
 
 %% Initialization =========================================================
 disp ('Starting processing...');
-fileNameStr = cat(2,settings.path,'\',settings.fileName,'.bin');
+if(choose == 2)
+    fileNameStr = cat(2,settings.path,'\',settings.fileName);
+else
+    fileNameStr = cat(2,settings.path,'\',settings.fileName,'.bin');
+end %(choose == 2)
 [fid, message] = fopen(fileNameStr, 'rb');
 
 %If success, then process the data
@@ -102,41 +106,48 @@ if (fid > 0)
         return;
     end
 
-%% Track the signal =======================================================
-    startTime = now;
-    disp (['   Tracking started at ', datestr(startTime)]);
-
-    % Process all channels for given data block
-    [trackResults, channel] = tracking(fid, channel, settings);
-
-    % Close the data file
-    fclose(fid);
     
-    disp(['   Tracking is over (elapsed time ', ...
+%% Track the signal =======================================================
+    if(settings.skipTracking == 0)
+        startTime = now;
+        disp (['   Tracking started at ', datestr(startTime)]);
+
+        % Process all channels for given data block
+        [trackResults, channel] = tracking(fid, channel, settings);
+
+        % Close the data file
+        fclose(fid);
+    
+        disp(['   Tracking is over (elapsed time ', ...
                                         datestr(now - startTime, 13), ')'])     
 
-    % Auto save the acquisition & tracking results to a file to allow
-    % running the positioning solution afterwards.
-    disp('   Saving Acq & Tracking results to file "trackingResults.mat"')
-    save('trackingResults', ...
+        % Auto save the acquisition & tracking results to a file to allow
+        % running the positioning solution afterwards.
+        disp('   Saving Acq & Tracking results to file "trackingResults.mat"')
+        save('trackingResults', ...
                       'trackResults', 'settings', 'acqResults', 'channel');                  
 
 %% Calculate navigation solutions =========================================
-    disp('   Calculating navigation solutions...');
-    navSolutions = postNavigation(trackResults, settings);
+        disp('   Calculating navigation solutions...');
+        navSolutions = postNavigation(trackResults, settings);
 
-    disp('   Processing is complete for this data block');
+        disp('   Processing is complete for this data block');
 
 %% Plot all results ===================================================
-    disp ('   Ploting results...');
-    if settings.plotTracking
-        plotTracking(1:settings.numberOfChannels, trackResults, settings);
-    end
+        disp ('   Ploting results...');
+        if settings.plotTracking
+            plotTracking(1:settings.numberOfChannels, trackResults, settings);
+        end
 
-    plotNavigation(navSolutions, settings);
+        plotNavigation(navSolutions, settings);
 
-    disp('Post processing of the signal is over.');
-
+        disp('Post processing of the signal is over.');
+    else
+        fclose(fid);
+        disp('Acquisition of the signal is over.');
+        disp('__________________________________________________________');
+    end %if(settings.skipTracking == 0)
+    
 else
     % Error while opening the data file.
     error('Unable to read file %s: %s.', settings.fileName, message);

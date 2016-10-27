@@ -1,4 +1,4 @@
-function probeData(settings)
+function probeData(settings,choose)
 %Function plots raw data information: time domain plot, a frequency domain
 %plot and a histogram. 
 %
@@ -43,7 +43,13 @@ function probeData(settings)
 %% Check the number of arguments ==========================================
 %if (nargin == 2)
 %    [settings, choose] = deal(varargin{1:2});
+    
+if(choose == 2)
+    fileNameStr = cat(2,settings.path,'\',settings.fileName);
+else
     fileNameStr = cat(2,settings.path,'\',settings.fileName,'.bin');
+end %(choose == 2)
+
     if ~ischar(fileNameStr)
         error('File name must be a string');
     end
@@ -66,8 +72,12 @@ if (fid > 0)
         fseek(fid, settings.skipNumberOfBytes, 'bof');    
     
         % Find number of samples per spreading code
+        
+        %samplesPerCode = round(settings.samplingFreq*settings.nrMSgen*...
+    %settings.nyquistGapgen/(settings.codeFreqBasis / settings.codeLength));
+        
         samplesPerCode = round(settings.samplingFreq / ...
-                           (settings.codeFreqBasis / settings.codeLength));
+                          (settings.codeFreqBasis / settings.codeLength));
                       
         % Read 10ms of signal
         [data, count] = fread(fid, [1, 10*samplesPerCode], settings.dataType);

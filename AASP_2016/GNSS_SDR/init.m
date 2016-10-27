@@ -106,7 +106,7 @@ end
 fprintf('\n')
 try
     fprintf('Probing data (%s)...\n',settings.fileName)
-    probeData(settings);
+    probeData(settings,choose);
 catch
     % There was an error, print it and exit
     errStruct = lasterror;
@@ -117,6 +117,7 @@ end %end try
 disp('  Raw IF data loaded and plotted ')
 %disp('  (run setSettings or change settings in "initSettings.m" to reconfigure)')
 disp(' ');
+%{
 gnssStart = input('Enter "1" to initiate GNSS processing or "0" to exit : ');
 
 if (gnssStart == 1)
@@ -124,4 +125,5 @@ if (gnssStart == 1)
     %start things rolling...
     postProcessing
 end
-
+%}
+postProcessing

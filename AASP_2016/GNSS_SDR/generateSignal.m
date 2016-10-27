@@ -13,8 +13,9 @@ fprintf(['\n\n             SDR GNSS\n',...
 fprintf(['\tINPUTS\n\n',...
         '\t- Remember that only 8 channel are allowed by now\n',...
         '\t- Enter a matrix where each row represents ONE satellite\n',...
-        'columns:  PRN     DoA      CodePhase     DopplerError    SNR    M.Path    SIR\n',...
-        '        (1 - 32)(0º-90º)(1 - 1023chips)(-10k ~ +10k)Hz (~-20dB)(l=1-LOS)(~-20dB)' ])
+        'columns:  PRN     DoA      CodePhase      Freq Offset     SNR    M.Path    SIR\n',...
+        '        (1 - 32)(0º-90º)(1 - %6d chips)(-10k ~ +10k)Hz (~-20dB)(l=1-LOS)(~-20dB)' ],...
+        settings.samplingFreq/1000)
 if(~skip)    
     satList = input('\nSatellite Matrix = \n');
 else
@@ -28,7 +29,7 @@ for ii = 1:d
     satellites(ii).PRN = satList(ii,1);
     satellites(ii).DoA = satList(ii,2);
     satellites(ii).CodPhase = satList(ii,3);
-    satellites(ii).DoppErr = satList(ii,4);
+    satellites(ii).FreqOffSet = satList(ii,4);
     satellites(ii).SNR = satList(ii,5);
     satellites(ii).Mpath = satList(ii,6);
     satellites(ii).SIR = satList(ii,7);
@@ -59,15 +60,18 @@ if(~skip)
 end
 %% Generation of satellite signals ========================================
 % Preallocation of satSignal array
-samplesPerCode = round(settings.samplingFreq*settings.nrMSgen*...
-    settings.nyquistGapgen/(settings.codeFreqBasis / settings.codeLength));
+%samplesPerCode = round(settings.samplingFreq*settings.nrMSgen*...
+%    settings.nyquistGapgen/(settings.codeFreqBasis / settings.codeLength));
+
+samplesPerCode = round(settings.samplingFreq*settings.nrMSgen...
+    /(settings.codeFreqBasis / settings.codeLength));
 
 if(~skip)
 satSignal = zeros(d,samplesPerCode);
 startTime = now;
     disp (['        Generation started at ', datestr(startTime)]);
  
-    fprintf('\t\t("." = 200us; "|" = 1 ms; "§" = 1 comp. C/A code)\n')
+    fprintf('\t\t("." = 250us; "|" = 1 ms; "§" = 1 comp. C/A code)\n')
     % call genSatSignal to perform the signal composition
     for ii = 1:d
         fprintf('Sat %2d ', ii)
