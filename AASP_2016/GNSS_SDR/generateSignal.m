@@ -84,10 +84,6 @@ startTime = now;
                                         datestr(now - startTime, 13), ')'])
     fprintf('\t-Satellite signals  . . . . . . . . created;\n');
 
-    %else
-    %load satSignal2.mat;
-    %satSignal = savedSatSignal;
-    %fprintf('-> Satellite signals  . . . . . . . . loaded;\n');
 end %if(~skip) 
 
 %% Generation of noise for each satellite =================================

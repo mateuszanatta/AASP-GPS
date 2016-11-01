@@ -89,7 +89,7 @@ if (fid > 0)
         disp ('   Acquiring satellites...');
         acqResults = acquisition(data, settings);
 
-        plotAcquisition(acqResults);
+        plotAcquisition(acqResults,settings);
     end
 
 %% Initialize channels and prepare for the run ============================

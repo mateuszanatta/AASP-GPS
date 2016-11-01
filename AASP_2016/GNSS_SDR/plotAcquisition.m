@@ -1,4 +1,4 @@
-function plotAcquisition(acqResults)
+function plotAcquisition(acqResults,settings)
 %Functions plots bar plot of acquisition results (acquisition metrics). No
 %bars are shown for the satellites not included in the acquisition list (in
 %structure SETTINGS). 
@@ -7,6 +7,7 @@ function plotAcquisition(acqResults)
 %
 %   Inputs:
 %       acqResults    - Acquisition results from function acquisition.
+%       settings      - settings struct containing threshold values
 
 %--------------------------------------------------------------------------
 %                           SoftGNSS v3.0
@@ -41,7 +42,7 @@ hAxes = newplot();
 bar(hAxes, acqResults.peakMetric);
 
 title (hAxes, 'Acquisition results');
-xlabel(hAxes, 'PRN number (no bar - SV is not in the acquisition list)');
+xlabel(hAxes, 'PRN number');
 ylabel(hAxes, 'Acquisition Metric');
 
 oldAxis = axis(hAxes);
@@ -55,6 +56,12 @@ acquiredSignals = acqResults.peakMetric .* (acqResults.carrFreq > 0);
 
 hold(hAxes, 'on');
 bar (hAxes, acquiredSignals, 'FaceColor', [0 0.8 0]);
+
+% Mark threshold line
+
+thresLine = settings.acqThreshold*ones(1,32);
+plot(1:32,thresLine,'--r','LineWidth',1);
+
 hold(hAxes, 'off');
 
 legend(hAxes, 'Not acquired signals', 'Acquired signals');
