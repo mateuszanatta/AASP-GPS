@@ -64,4 +64,4 @@ plot(1:32,thresLine,'--r','LineWidth',1);
 
 hold(hAxes, 'off');
 
-legend(hAxes, 'Not acquired signals', 'Acquired signals');
+legend(hAxes, 'Not acquired signals', 'Acquired signals','Threshold');
