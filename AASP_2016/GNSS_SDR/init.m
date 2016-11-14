@@ -59,7 +59,8 @@ settings = initSettings();
 fprintf('Struct "settings" initialized\n')
 %% Ask for settings structure change ======================================
 fprintf('Do you wish to run "setSettings.m"?\n')
-choose = input('   1 = Yes    2 = No\n');
+choose = input('   1 = Yes    2 = No \n');
+fprintf('\n')
 if(choose == 1)
     setSettings;
 end

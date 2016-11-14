@@ -86,15 +86,21 @@ startTime = now;
 
 end %if(~skip) 
 
+%% Generation of multipath components =====================================
+if(~skip)
+    fprintf('\t-Multipath components . . . . . . . added;\n');
+end
+
 %% Generation of noise for each satellite =================================
 
 %fprintf('Noise added\n')
 if(~skip)
+    fprintf('Add noise?')
+    noise = input('   1 = Yes    0 = No\n');
+    if (noise)
+        addNoise(satSignal,satellites,settings)
+    end %if(noise)
     fprintf('\t-Noise  . . . . . . . . . . . . . . added;\n');
-end
-%% Generation of multipath components =====================================
-if(~skip)
-    fprintf('\t-Multipath components . . . . . . . added;\n');
 end
 %% Gereneration of receiver signal ========================================
 % call genRcvSignal to add all signals and save in approp. file
