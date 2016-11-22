@@ -67,8 +67,16 @@ samplesPerCode = round(settings.samplingFreq*settings.nrMSgen...
     /(settings.codeFreqBasis / settings.codeLength));
 
 if(~skip)
-satSignal = zeros(d,samplesPerCode);
-startTime = now;
+    %{
+    satSignal = zeros(rows,samplesPerCode);
+    rows = 0;
+    for jj = 1:d
+        rows = rows + satellites(jj).MPath;
+    end %for jj = 1:d
+    %}
+    satSignal = zeros(d,samplesPerCode);
+    
+    startTime = now;
     disp (['        Generation started at ', datestr(startTime)]);
  
     fprintf('\t\t("." = 250us; "|" = 1 ms; "§" = 1 comp. C/A code)\n')
@@ -98,7 +106,7 @@ if(~skip)
     fprintf('Add noise?')
     noise = input('   1 = Yes    0 = No\n');
     if (noise)
-        addNoise(satSignal,satellites,settings)
+        satSignal = addNoise(satSignal,satellites,settings);
     end %if(noise)
     fprintf('\t-Noise  . . . . . . . . . . . . . . added;\n');
 end

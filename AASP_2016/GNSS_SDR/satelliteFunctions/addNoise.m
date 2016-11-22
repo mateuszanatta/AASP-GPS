@@ -12,6 +12,7 @@ sqrSignal = signal.^2;
 [sats,samples] = size(signal);
 
     for indexSat = 1:sats
+        %{
         %measure signal power
         signalPow = sum(sqrSignal(indexSat,:)) / samples ;
     
@@ -28,7 +29,24 @@ sqrSignal = signal.^2;
         %apply desired noise power
         noiseAmp = sqrt( desirNoisePow / noisePow );
         N = noiseAmp .* N;
+        %}
+ %===========================================       
+        %measure signal power
+        signalPow = sum(sqrSignal(indexSat,:)) / samples ;
         
+        %create noise
+        N = randn(1,samples);
+    
+        %measure noise power
+        sqrN = N.^2;
+        noisePow = sum( sqrN(:) ) / samples ;
+        %calculate the desired noise power regarding actual signal power
+        desirSignalPow = ( noisePow * db2mag( satellites(indexSat).SNR ) ); %in dB
+    
+        %apply desired noise power
+        signalAtten = sqrt( desirSignalPow / signalPow );
+        signal(indexSat,:) = signal(indexSat,:) .* signalAtten;
+%==============================================        
         %for m = 1:satellite(indexSat).Mpath
         signal(indexSat,:) = signal(indexSat,:) + N;
         %end %for m = 1:satellite(indexSat).Mpath

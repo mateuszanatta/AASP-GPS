@@ -64,7 +64,7 @@ settings.dataType           = 'int8';
 % Intermediate, sampling and code frequencies
 settings.IF             = 9.548e6;      %[Hz]
 settings.samplingFreq   = 38.192e6;     %[Hz]
-settings.BW             = 10e6;         %[Hz] - 3dB point, centered in L1
+settings.BW             = 8.5e6;         %[Hz] - 3dB point, centered in L1
 settings.codeFreqBasis  = 1.023e6;      %[Hz]
 settings.satFo          = 10*settings.codeFreqBasis; %[Hz]
 settings.satL1freq      = 154*settings.satFo; %[Hz]

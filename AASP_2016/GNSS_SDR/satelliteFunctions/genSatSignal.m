@@ -50,7 +50,8 @@ ref = 154*settings.nyquistGapgen; %Pcode basis = 154 clocks of carrier
 % and 1000 beacause of the ms base
 TIME = length(time);
 marker250us = fix(TIME/(settings.nrMSgen*4));
-marker1ms = fix(TIME/settings.nrMSgen);
+marker1ms = 4*marker250us;
+
 for now = 1:TIME
     % BPSK itself trough look-up tables
     if( time(now) >= samptime(sample) ) % comparision of generation time with sampling time
@@ -108,7 +109,9 @@ for now = 1:TIME
             fprintf('|')
         end
     end
-    
+ 
+
+
 end % for now = 1:length(time)
 
 %carriers addition

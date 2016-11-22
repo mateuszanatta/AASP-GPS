@@ -184,7 +184,7 @@ axes.YTickLabel = yTickLabel;
 axes.ZLabel.String = 'Correlation magnitude';
 
 valueFreq = num2str(frqBins(frequencyBinIndex)*1e-6);
-text1 = cat(2,'Acq  Freq : ',valueFreq,' MHz');
+text1 = cat(2,'Acq  Freq  : ',valueFreq,' MHz');
 valuePhase = num2str(codePhase);
 text2 = cat(2,'Acq Phase: ',valuePhase,' samp.');
 annotation('textbox', [0.13,0.8,0.3,0.1],'String', {text1,text2})
