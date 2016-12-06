@@ -140,7 +140,7 @@ for PRN = settings.acqSatelliteList
     % The second peak is chosen not closer than 1 chip to the highest peak
     
     %--- Find the correlation peak and the carrier frequency --------------
-    [peakSize, frequencyBinIndex] = max(max(results, [], 2));
+    [~, frequencyBinIndex] = max(max(results, [], 2));
 
     %--- Find code phase of the same correlation peak ---------------------
     [peakSize, codePhase] = max(max(results));

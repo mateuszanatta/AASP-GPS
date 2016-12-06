@@ -22,7 +22,7 @@ else
     satList = SAT;
 end %if(~skip)
 
-    % creating struct with satellites informations
+% creating struct with satellites informations
 [d,~] = size(satList);
 satellites = struct([]);
 for ii = 1:d
@@ -34,6 +34,7 @@ for ii = 1:d
     satellites(ii).Mpath = satList(ii,6);
     satellites(ii).SIR = satList(ii,7);
 end %for ii = 1:d
+satellites = orderStruct(satellites);
 if(~skip)
     save(cat(2,settings.path,'\savedSAT.mat'),'SAT');
 end

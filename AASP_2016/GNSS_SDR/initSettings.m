@@ -40,16 +40,17 @@ function settings = initSettings()
 %% Processing settings ====================================================
 % Number of milliseconds to be processed used 36000 + any transients (see
 % below - in Nav parameters) to ensure nav subframes are provided
-settings.msToProcess        = 37000;        %[ms]
+%settings.msToProcess        = 37000;        %[ms]
+settings.msToProcess        = 11;        %[ms]
 
 % Number of channels to be used for signal processing
-settings.numberOfChannels   = 8;
+settings.numberOfChannels   = 6;
 
 % Move the starting point of processing. Can be used to start the signal
 % processing at any point in the data record (e.g. for long records). fseek
 % function is used to move the file read point, therefore advance is byte
 % based only. 
-settings.skipNumberOfBytes     = 1;
+settings.skipNumberOfBytes     = 0;
 
 %% Raw signal file name and other parameters ==============================
 % This is a "default" name of the data file (signal record) to be used in
@@ -103,7 +104,8 @@ settings.skipAcquisition    = 0;
 settings.skipTracking       = 1;
 % List of satellites to look for. Some satellites can be excluded to speed
 % up acquisition
-settings.acqSatelliteList   = 1:32;         %[PRN numbers]
+%settings.acqSatelliteList   = 1:32;         %[PRN numbers]
+settings.acqSatelliteList   = 7;
 % Band around IF to search for satellite signal. Depends on max Doppler
 settings.acqSearchBand      = 20;           %[kHz]
 % Threshold for the signal presence decision rule

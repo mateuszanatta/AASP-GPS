@@ -35,11 +35,11 @@ sos = zp2sos(z,p,k); %numeric precision, [b,a] not good
 rcvSignal = sosfilt(sos,rcvSignal);
    
 %% Save .bin file for postProcessing script adequated use    
-fileNameStr = cat(2,settings.path,'\',settings.fileName,'.bin');
+fileNameStr = cat(2,settings.path,settings.fileName,'.bin');
 fid = fopen(fileNameStr,'w');
 fwrite(fid,rcvSignal,settings.dataType);
 fclose(fid);
-save(cat(2,settings.path,'\rcvSignal.mat'),'rcvSignal');
+%save(cat(2,settings.path,'\rcvSignal.mat'),'rcvSignal');
 
 end %function [] = genRcvSignal( signal, sats , set)
 

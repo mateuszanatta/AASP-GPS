@@ -1,11 +1,7 @@
 function probeData(settings,choose)
 %Function plots raw data information: time domain plot, a frequency domain
 %plot and a histogram. 
-%
-%The function can be called in two ways:
-%   probeData(settings)
-% or
-%   probeData(fileName, settings)
+
 %
 %   Inputs:
 %       fileName        - name of the data file. File name is read from

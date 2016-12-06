@@ -118,13 +118,16 @@ end %end try
 disp('  Raw IF data loaded and plotted ')
 %disp('  (run setSettings or change settings in "initSettings.m" to reconfigure)')
 disp(' ');
-%{
-gnssStart = input('Enter "1" to initiate GNSS processing or "0" to exit : ');
 
-if (gnssStart == 1)
-    disp(' ');
-    %start things rolling...
-    postProcessing
-end
-%}
-postProcessing
+%%=========================================================================
+% change the value of settings.skipTracking to use the pre-correlation
+% block or the pre-correlation and post-correlation block
+
+%Utilize this line to process the whole information block of 37ms (original)
+%postProcessing
+
+%%=========================================================================
+%Utilize this line to process the partial information block of 11ms 
+postShortProc
+
+%%=========================================================================
